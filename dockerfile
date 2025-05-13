@@ -12,3 +12,5 @@ FROM scratch
 WORKDIR /app
 COPY --from=builder /app/go-api .
 COPY --from=builder /app .
+
+CMD ["/go-api"]
