@@ -5,6 +5,7 @@ go 1.23
 toolchain go1.23.9
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.10.0
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.26.1
