@@ -1,0 +1,19 @@
+  version: '3.8'
+
+  services:
+    go-api-basic-build-scratch:
+      build: .
+      container_name: app
+      ports:
+        - "0.0.0.0:8080:8080"
+      restart: no
+
+    db:
+      container_name: db
+      image: postgres
+      restart: no
+      shm_size: 128mb
+      environment:
+        POSTGRES_PASSWORD:
+      ports:
+        - "0.0.0.0:5432:5432"
