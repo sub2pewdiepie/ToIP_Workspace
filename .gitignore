@@ -3,3 +3,4 @@
 !.env.example
 routes-example.go
 .DS_Store
+.qodo
