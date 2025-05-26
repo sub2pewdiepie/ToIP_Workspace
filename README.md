@@ -3,7 +3,6 @@
 TO-DO:
 1. ER-диаграмма
 2. Swagger/OpenAPI документация - DONE?
-***
 ## По третьей
 TO-DO:
 1. Dockerfile - DONE

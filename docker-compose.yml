@@ -1,4 +1,4 @@
-  version: '3.8'
+  version: '3.9'
 
   services:
     go-api-basic-build-scratch:
@@ -17,3 +17,13 @@
         POSTGRES_PASSWORD: $(POSTGRES_PASSWORD)
       ports:
         - "0.0.0.0:5432:5432"
+
+    nginx:
+      image: nginx:alpine
+      container_name: nginx
+      ports:
+        - "80:80"
+      volumes:
+        - ./nginx.conf:/etc/nginx/nginx.conf
+      depends_on:
+        - go-api-basic-build-scratch
