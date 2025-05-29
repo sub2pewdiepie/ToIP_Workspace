@@ -1,0 +1,46 @@
+events {
+    worker_connections 1024;
+}
+
+access_log /var/log/nginx/access.log;
+error_log /var/log/nginx/error.log warn;
+
+http {
+    sendfile on;
+    server_tokens off;
+    
+    upstream backend {
+    least_conn;
+    server 127.0.0.1:8080;
+    server 127.0.0.1:8081;
+    server 127.0.0.1:8082;
+    }
+
+
+    server {
+        listen 80;
+
+        proxy_buffers 8 64k;
+        proxy_intercept_errors on;
+        proxy_connect_timeout 1s;
+        proxy_read_timeout 3s;
+        proxy_send_timeout 3s;
+
+        location / {
+            proxy_pass http://go-api-basic-build-scratch:8080;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /login {
+            limit_req zone=one burst=5 nodelay;
+            proxy_pass http://go-api-basic-build-scratch:8080;
+        }
+
+    }
+}
+
+
+
