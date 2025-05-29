@@ -8,7 +8,8 @@ RUN apt-get update && \
 COPY nginx.conf.template /etc/nginx/nginx.conf.template
 COPY startup.sh /startup.sh
 
-RUN chmod +x /startup.sh
+RUN chmod +x /startup.sh && \
+    rm -f /etc/nginx/conf.d/default.conf  # Удаляем дефолтный конфиг
 
 EXPOSE 80 443
 

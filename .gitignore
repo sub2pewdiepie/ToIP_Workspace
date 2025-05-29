@@ -4,3 +4,6 @@
 routes-example.go
 .DS_Store
 .qodo
+certs/
+certbot-www/
+db_data/

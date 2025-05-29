@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 
 RUN go mod tidy
-RUN go build -o go-api ./app/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o go-api ./app/main.go
 
 # ========================================================
 FROM scratch
