@@ -10,8 +10,7 @@
       depends_on:
         db:
           condition: service_healthy
-      volumes:
-        # - ./config:/app/config
+
 
     db:
       container_name: db
@@ -32,17 +31,17 @@
           retries: 5
 
 
-    # nginx:
-    #     build: ./certginx 
-    #     container_name: certginx
-    #     ports:
-    #       - "80:80"
-    #       - "443:443"
-    #     volumes:
-    #       - ./certs:/etc/letsencrypt
-    #       - ./certbot-www:/var/www/certbot
-    #     environment:
-    #       DOMAIN: ${DOMAIN}
-    #       EMAIL: ${EMAIL}
-    #     depends_on:
-    #       - go-api-basic-build-scratch
+    nginx:
+        build: ./certginx 
+        container_name: certginx
+        ports:
+          - "80:80"
+          - "443:443"
+        volumes:
+          - ./certs:/etc/letsencrypt
+          - ./certbot-www:/var/www/certbot
+        environment:
+          DOMAIN: ${DOMAIN}
+          EMAIL: ${EMAIL}
+        depends_on:
+          - go-api-basic-build-scratch
