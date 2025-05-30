@@ -41,6 +41,7 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	// Validate credentials
+	// Заменить на завпрос в бд
 	if password, ok := users[creds.Username]; !ok || password != creds.Password {
 		services.HandleError(c, http.StatusUnauthorized, "Unauthorized")
 		return

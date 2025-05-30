@@ -1,0 +1,63 @@
+events {
+    worker_connections 1024;
+}
+
+http {
+    sendfile on;
+    server_tokens off;
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log warn;
+
+    include /etc/nginx/conf.d/*.conf;
+
+    # Зона для ограничения запросов
+    limit_req_zone $binary_remote_addr zone=one:10m rate=1r/s;
+
+    # Общие настройки прокси
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    upstream backend {
+        least_conn;
+        server go-api-basic-build-scratch:8080;
+        # Дополнительные серверы при необходимости:
+        # server go-api-basic-build-scratch:8081;
+        # server go-api-basic-build-scratch:8082;
+    }
+
+    server {
+        listen 80;
+        #listen [::]:80 ipv6only=on default_server;
+
+        listen 443 ssl;
+        server_name ${DOMAIN};
+        ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+        # Настройки прокси
+        proxy_buffers 8 64k;
+        proxy_intercept_errors on;
+        proxy_connect_timeout 1s;
+        proxy_read_timeout 3s;
+        proxy_send_timeout 3s;
+
+        
+        client_max_body_size 10m;
+        proxy_hide_header X-Powered-By;
+
+        location / {
+            proxy_pass http://backend;
+        }
+
+        location /login {
+            limit_req zone=one burst=5 nodelay;
+            # Дополнительные настройки безопасности
+            add_header X-Frame-Options "DENY";
+            add_header Content-Security-Policy "default-src 'self'";
+            proxy_pass http://backend;
+        }
+    }
+
+}
