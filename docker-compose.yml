@@ -15,10 +15,12 @@
       shm_size: 128mb
       environment:
         POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      volumes:
-        - ./db_data:/var/lib/postgresql/data
+        POSTGRES_DB: mydb
       ports:
         - "0.0.0.0:5432:5432"
+      # volumes:
+      #   - ./init:/docker-entrypoint-initdb.d 
+
 
     nginx:
         build: ./certginx 

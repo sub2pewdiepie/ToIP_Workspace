@@ -7,3 +7,5 @@ routes-example.go
 certs/
 certbot-www/
 db_data/
+*.example
+sussibd.session.sql
