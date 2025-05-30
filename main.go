@@ -8,12 +8,14 @@ import (
 	"space/routes"
 	"space/services"
 
+	_ "space/docs"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// @title            Сваггер документация api
+// @title           СВАГА
 // @version         1.0
 // @description
 // @termsOfService  http://swagger.io/terms/
@@ -24,7 +26,7 @@ import (
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      178.208.64.200:8080
+// @host      185.221.155.133:8080
 // @BasePath  /
 
 // @securityDefinitions.apikey ApiKeyAuth
