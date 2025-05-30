@@ -1,9 +1,12 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"space/database"
+	"space/repositories"
 	"space/routes"
+	"space/services"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -29,11 +32,19 @@ import (
 // @name Authorization
 func main() {
 
-	database.ConnectDatabase()
+	err := database.ConnectDatabase()
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
 	router := gin.Default()
 	// Public routes
-	router.POST("/login", routes.LoginHandler) // Login route
+	// router.POST("/login", routes.LoginHandler) // Login route
+	userRepo := repositories.NewUserRepository(database.DB)
+	authService := services.NewAuthService(userRepo)
+
+	router.POST("/login", routes.LoginHandler(authService))
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.POST("/register", routes.RegisterHandler(authService))
 	router.GET("/hello", func(c *gin.Context) {
 
 		c.String(http.StatusOK, "Hello, World!")

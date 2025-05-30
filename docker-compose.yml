@@ -7,6 +7,11 @@
       ports:
         - "0.0.0.0:8080:8080"
       restart: no
+      depends_on:
+        db:
+          condition: service_healthy
+      volumes:
+        # - ./config:/app/config
 
     db:
       container_name: db
@@ -20,19 +25,24 @@
         - "0.0.0.0:5432:5432"
       # volumes:
       #   - ./init:/docker-entrypoint-initdb.d 
+      healthcheck:
+          test: ["CMD-SHELL", "pg_isready"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
 
 
-    nginx:
-        build: ./certginx 
-        container_name: certginx
-        ports:
-          - "80:80"
-          - "443:443"
-        volumes:
-          - ./certs:/etc/letsencrypt
-          - ./certbot-www:/var/www/certbot
-        environment:
-          DOMAIN: ${DOMAIN}
-          EMAIL: ${EMAIL}
-        depends_on:
-          - go-api-basic-build-scratch
+    # nginx:
+    #     build: ./certginx 
+    #     container_name: certginx
+    #     ports:
+    #       - "80:80"
+    #       - "443:443"
+    #     volumes:
+    #       - ./certs:/etc/letsencrypt
+    #       - ./certbot-www:/var/www/certbot
+    #     environment:
+    #       DOMAIN: ${DOMAIN}
+    #       EMAIL: ${EMAIL}
+    #     depends_on:
+    #       - go-api-basic-build-scratch

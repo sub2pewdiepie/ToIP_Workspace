@@ -114,10 +114,9 @@ func ConnectDatabase() error {
 		&models.GroupUser{},     // Depends on Group, User
 		&models.Subject{},       // Depends on Group
 		&models.Task{},          // Depends on Subject, User
-
-		&models.Material{}, // Depends on Subject, User
-		&models.TimeSlot{}, // No dependencies
-		&models.Schedule{}, // Depends on Group, Subject, TimeSlot
+		&models.Material{},      // Depends on Subject, User
+		&models.TimeSlot{},      // No dependencies
+		&models.Schedule{},      // Depends on Group, Subject, TimeSlot
 	)
 	fmt.Printf("no migratia")
 	if err != nil {
