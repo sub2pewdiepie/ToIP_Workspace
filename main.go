@@ -1,16 +1,21 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"space/database"
+	"space/repositories"
 	"space/routes"
+	"space/services"
+
+	_ "space/docs"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// @title            Сваггер документация api
+// @title           СВАГА
 // @version         1.0
 // @description
 // @termsOfService  http://swagger.io/terms/
@@ -21,7 +26,7 @@ import (
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      178.208.64.200:8080
+// @host      185.221.155.133:8080
 // @BasePath  /
 
 // @securityDefinitions.apikey ApiKeyAuth
@@ -29,11 +34,19 @@ import (
 // @name Authorization
 func main() {
 
-	database.ConnectDatabase()
+	err := database.ConnectDatabase()
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
 	router := gin.Default()
 	// Public routes
-	router.POST("/login", routes.LoginHandler) // Login route
+	// router.POST("/login", routes.LoginHandler) // Login route
+	userRepo := repositories.NewUserRepository(database.DB)
+	authService := services.NewAuthService(userRepo)
+
+	router.POST("/login", routes.LoginHandler(authService))
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.POST("/register", routes.RegisterHandler(authService))
 	router.GET("/hello", func(c *gin.Context) {
 
 		c.String(http.StatusOK, "Hello, World!")

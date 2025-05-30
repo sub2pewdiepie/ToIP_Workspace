@@ -2,7 +2,6 @@ package routes
 
 import (
 	"net/http"
-	"space/auth"
 	"space/services"
 
 	"github.com/gin-gonic/gin"
@@ -32,27 +31,21 @@ var users = map[string]string{
 // @Failure 401 {object} map[string]any
 // @Failure 500 {object} map[string]any
 // @Router /login [post]
-func LoginHandler(c *gin.Context) {
-	var creds Credentials
-	if err := c.ShouldBindJSON(&creds); err != nil {
-		// c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request"})
-		services.HandleError(c, http.StatusBadRequest, "Invalid request")
-		return
-	}
+// routes/auth.go
+func LoginHandler(authService *services.AuthService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input services.LoginInput
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+			return
+		}
 
-	// Validate credentials
-	// Заменить на завпрос в бд
-	if password, ok := users[creds.Username]; !ok || password != creds.Password {
-		services.HandleError(c, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
+		token, err := authService.LoginUser(input)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
 
-	// Generate JWT
-	token, err := auth.GenerateJWT(creds.Username)
-	if err != nil {
-		services.HandleError(c, http.StatusInternalServerError, "Could not generate token")
-		return
+		c.JSON(http.StatusOK, gin.H{"token": token})
 	}
-
-	c.JSON(http.StatusOK, gin.H{"token": token})
 }

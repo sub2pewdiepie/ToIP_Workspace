@@ -7,6 +7,10 @@
       ports:
         - "0.0.0.0:8080:8080"
       restart: no
+      depends_on:
+        db:
+          condition: service_healthy
+
 
     db:
       container_name: db
@@ -20,6 +24,11 @@
         - "0.0.0.0:5432:5432"
       # volumes:
       #   - ./init:/docker-entrypoint-initdb.d 
+      healthcheck:
+          test: ["CMD-SHELL", "pg_isready"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
 
 
     nginx:

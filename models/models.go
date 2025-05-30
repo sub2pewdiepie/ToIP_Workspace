@@ -199,7 +199,7 @@ type Subject struct {
 //			Creator User
 //	}
 type Task struct {
-	TaskID    int   `gorm:"column:task_id;primaryKey;autoIncrement"`
+	TaskID    int32 `gorm:"column:task_id;primaryKey;autoIncrement"`
 	SubjectID int32 `gorm:"foreignKey:SubjectID;references:SubjectID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 
 	Title       string    `gorm:"column:title;type:varchar(255);not null"`
@@ -208,7 +208,8 @@ type Task struct {
 	IsActive    bool      `gorm:"column:is_active;default:true"`
 	CreatedAt   time.Time `gorm:"column:created_at;default:CURRENT_TIMESTAMP"`
 	UpdatedAt   time.Time `gorm:"column:updated_at;default:CURRENT_TIMESTAMP"`
-	Subject     Subject   `gorm:"foreignKey:SubjectID"`
+	// Subject     Subject   `gorm:"foreignKey:SubjectID"`
+	Subject Subject
 
 	User User `gorm:"foreignKey:CreatedBy;references:user_id"`
 }
@@ -222,8 +223,9 @@ type Material struct {
 	CreatedBy  int32     `gorm:"foreignKey:CreatedBy;references:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	IsActive   bool      `gorm:"default:true"`
 	CreatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	Subject    Subject   `gorm:"foreignKey:SubjectID"`
-	Creator    User      `gorm:"foreignKey:CreatedBy"`
+	Subject    Subject
+	Creator    User `gorm:"foreignKey:CreatedBy"`
+	// Subject    Subject   `gorm:"foreignKey:SubjectID"`
 }
 
 // TimeSlots
@@ -248,8 +250,9 @@ type Schedule struct {
 	Date      time.Time `gorm:"type:date;not null"`
 	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"`
 
-	Group   Group   `gorm:"foreignKey:GroupID"`
-	Subject Subject `gorm:"foreignKey:SubjectID"`
+	Group Group `gorm:"foreignKey:GroupID"`
+	// Subject Subject `gorm:"foreignKey:SubjectID"`
+	Subject Subject
 
 	// Subject  Subject `gorm:"foreignKey:SubjectID"`
 	TimeSlot TimeSlot

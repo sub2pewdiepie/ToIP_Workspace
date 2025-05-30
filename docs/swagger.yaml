@@ -7,7 +7,20 @@ definitions:
       username:
         type: string
     type: object
-host: localhost:8080
+  routes.RegisterInput:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+host: 178.208.64.200:8080
 info:
   contact:
     email: vasyutin.i.a@edu.mirea.ru, saakovi.d.@edu.mirea.ru, pronin.p.v@edu.mirea.ru
@@ -46,6 +59,38 @@ paths:
             type: object
         "401":
           description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user
+      operationId: register
+      parameters:
+      - description: User registration input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/routes.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: registered
+          schema:
+            type: string
+        "400":
+          description: Bad Request
           schema:
             additionalProperties: true
             type: object

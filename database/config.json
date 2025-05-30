@@ -1,8 +1,0 @@
-{
-  "host": "localhost",
-  "user": "postgres",
-  "password": "superSecret123",
-  "dbname": "mydb",
-  "port": 5432,
-  "sslmode": "disable"
-}
