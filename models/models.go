@@ -130,7 +130,7 @@ type AcademicGroup struct {
 }
 
 // Group
-type Group struct {
+type OldGroup struct {
 	// GroupID         int32         `gorm:"primaryKey"`
 	// Name            string        `gorm:"type:varchar(255);not null"`
 	// AcademicGroupID int32         `gorm:"foreignKey:AcademicGroupID;references:AcademicGroupID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
@@ -145,6 +145,18 @@ type Group struct {
 	AdminID         int32
 	AcademicGroup   AcademicGroup
 	Admin           User
+}
+
+type Group struct {
+	ID              int32     `gorm:"primaryKey"`
+	Name            string    `gorm:"type:varchar(255)"`
+	CreatedAt       time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+	AcademicGroupID int32     `gorm:"index"` // Foreign key to AcademicGroup
+	AdminID         int32     `gorm:"index"` // Foreign key to User (admin)
+
+	AcademicGroup AcademicGroup
+
+	Admin User
 }
 
 // GroupModer
@@ -256,4 +268,15 @@ type Schedule struct {
 
 	// Subject  Subject `gorm:"foreignKey:SubjectID"`
 	TimeSlot TimeSlot
+}
+type GroupApplication struct {
+	ApplicationID int32     `gorm:"primaryKey;autoIncrement"`
+	GroupID       int32     `gorm:"not null"`
+	UserID        int32     `gorm:"not null"`
+	Message       string    `gorm:"type:text"`
+	Status        string    `gorm:"type:varchar(50);default:'pending'"` // pending, approved, rejected
+	CreatedAt     time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+
+	Group Group
+	User  User
 }

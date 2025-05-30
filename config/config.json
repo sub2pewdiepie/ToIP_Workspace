@@ -1,5 +1,5 @@
 {
-  "host": "db",
+  "host": "localhost",
   "user": "postgres",
   "password": "superSecret123",
   "dbname": "mydb",
