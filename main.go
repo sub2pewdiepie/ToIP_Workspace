@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"space/database"
 	"space/routes"
 
@@ -33,6 +34,11 @@ func main() {
 	// Public routes
 	router.POST("/login", routes.LoginHandler) // Login route
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET("/hello", func(c *gin.Context) {
+
+		c.String(http.StatusOK, "Hello, World!")
+
+	})
 
 	router.Run(":8080")
 }
