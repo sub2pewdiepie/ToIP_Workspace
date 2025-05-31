@@ -4,8 +4,10 @@ import (
 	"errors"
 	"space/models"
 	"space/repositories"
+	"space/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 // type GroupApplicationService struct {
@@ -48,27 +50,56 @@ func NewGroupApplicationService(repo *repositories.GroupApplicationRepository,
 func (s *GroupApplicationService) ApplyToGroup(c *gin.Context, groupID int32, message string) error {
 	username, exists := c.Get("username")
 	if !exists {
+		utils.Logger.Error("User not authenticated")
 		return errors.New("user not authenticated")
 	}
 
 	user, err := s.userRepo.GetByUsername(username.(string))
 	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+		}).Error("Failed to find authenticated user")
 		return errors.New("failed to find authenticated user")
 	}
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+		"user_id":  user.UserID,
+		"group_id": groupID,
+	}).Debug("Checking group membership")
 
 	isMember, err := s.groupUserRepo.IsMember(groupID, user.UserID)
 	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"user_id":  user.UserID,
+			"group_id": groupID,
+		}).Error("Failed to check group membership")
 		return err
 	}
 	if isMember {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"user_id":  user.UserID,
+			"group_id": groupID,
+		}).Error("Failed to check group membership")
 		return errors.New("user is already a group member")
 	}
 
 	exists, err = s.repo.ExistsPending(groupID, user.UserID)
 	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"user_id":  user.UserID,
+			"group_id": groupID,
+		}).Error("Failed to check pending application")
 		return err
 	}
 	if exists {
+		utils.Logger.WithFields(logrus.Fields{
+			"user_id":  user.UserID,
+			"group_id": groupID,
+		}).Warn("Application already submitted and pending")
 		return errors.New("application already submitted and pending")
 	}
 
@@ -78,9 +109,26 @@ func (s *GroupApplicationService) ApplyToGroup(c *gin.Context, groupID int32, me
 		Status:  "pending",
 		Message: message,
 	}
-	return s.repo.Create(app)
+	utils.Logger.WithFields(logrus.Fields{
+		"user_id":  user.UserID,
+		"group_id": groupID,
+	}).Debug("Creating group application")
+
+	if err := s.repo.Create(app); err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"user_id":  user.UserID,
+			"group_id": groupID,
+		}).Error("Failed to create group application")
+		return err
+	}
+
+	return nil
+
+	// return s.repo.Create(app)
 }
 
+// стоит и дальше добавить логгирование
 func (s *GroupApplicationService) GetPendingApplications(c *gin.Context) ([]models.GroupApplication, error) {
 	// Fetch groups user moderates or admins
 	username, exists := c.Get("username")

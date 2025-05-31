@@ -1,13 +1,13 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"space/auth"
 	"space/database"
 	"space/repositories"
 	"space/routes"
 	"space/services"
+	"space/utils"
 
 	_ "space/docs"
 
@@ -34,10 +34,12 @@ import (
 // @in header
 // @name Authorization
 func main() {
-
+	utils.Init()
+	utils.Logger.Info("Starting application")
 	err := database.ConnectDatabase()
 	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
+		utils.Logger.WithField("error", err).Fatal("Failed to connect to database")
+		// log.Fatalf("failed to connect to database: %v", err)
 	}
 	router := gin.Default()
 

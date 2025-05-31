@@ -4,9 +4,11 @@ import (
 	"net/http"
 	"space/models/dto"
 	"space/services"
+	"space/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type GroupApplicationHandler struct {
@@ -43,11 +45,19 @@ func (h *GroupApplicationHandler) ReviewApplication(c *gin.Context) {
 
 	groupID, err := strconv.Atoi(groupIDStr)
 	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupIDStr,
+		}).Error("Invalid group ID")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid group ID"})
 		return
 	}
 	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":   err,
+			"user_id": userIDStr,
+		}).Error("Invalid user ID")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
 	}
@@ -56,6 +66,10 @@ func (h *GroupApplicationHandler) ReviewApplication(c *gin.Context) {
 		Status string `json:"status"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil || (req.Status != "approved" && req.Status != "rejected") {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":  err,
+			"status": req.Status,
+		}).Error("Invalid status")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status. Must be 'approved' or 'rejected'"})
 		return
 	}
@@ -63,17 +77,35 @@ func (h *GroupApplicationHandler) ReviewApplication(c *gin.Context) {
 	// Get the username from the context
 	username, exists := c.Get("username")
 	if !exists {
+		utils.Logger.Error("Unauthorized: username not found in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+		"user_id":  userID,
+		"group_id": groupID,
+		"status":   req.Status,
+	}).Debug("Reviewing application")
 
 	// Call the service
 	err = h.service.ReviewApplication(int32(groupID), int32(userID), username.(string), req.Status)
 	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+			"user_id":  userID,
+			"group_id": groupID,
+		}).Error("Failed to review application")
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
-
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+		"user_id":  userID,
+		"group_id": groupID,
+		"status":   req.Status,
+	}).Info("Application reviewed successfully")
 	c.JSON(http.StatusOK, gin.H{"message": "Application reviewed successfully"})
 }
 
@@ -92,23 +124,40 @@ func (h *GroupApplicationHandler) ReviewApplication(c *gin.Context) {
 func (h *GroupApplicationHandler) CreateApplication(c *gin.Context) {
 	var req dto.CreateApplicationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error": err,
+		}).Error("Invalid input")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
 	// userID, exists := c.Get("userID")
-	_, exists := c.Get("username")
+	username, exists := c.Get("username")
 	if !exists {
+		utils.Logger.Error("Unauthorized: username not found in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+		"group_id": req.GroupID,
+	}).Debug("Processing group application")
 
 	err := h.service.ApplyToGroup(c, req.GroupID, req.Message)
 	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+			"group_id": req.GroupID,
+		}).Error("Failed to fetch application")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
+	utils.Logger.WithFields(logrus.Fields{
+		// "application_id": application.ApplicationID,
+		"username": username,
+		"group_id": req.GroupID,
+	}).Info("Group application created")
 	c.JSON(http.StatusCreated, gin.H{"message": "Application submitted successfully"})
 }
 
@@ -124,14 +173,22 @@ func (h *GroupApplicationHandler) CreateApplication(c *gin.Context) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /api/groups/applications/pending [get]
 func (h *GroupApplicationHandler) GetPendingApplications(c *gin.Context) {
-	_, exists := c.Get("username")
+	username, exists := c.Get("username")
 	if !exists {
+		utils.Logger.Error("Unauthorized: username not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
-
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+	}).Debug("Fetching pending applications")
 	applications, err := h.service.GetPendingApplications(c)
 	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+		}).Error("Failed to fetch pending applications")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -140,6 +197,9 @@ func (h *GroupApplicationHandler) GetPendingApplications(c *gin.Context) {
 	for i, app := range applications {
 		applicationDTOs[i] = dto.ToGroupApplicationDTO(&app)
 	}
-
+	utils.Logger.WithFields(logrus.Fields{
+		"username":          username,
+		"application_count": len(applications),
+	}).Info("Retrieved pending applications")
 	c.JSON(http.StatusOK, applicationDTOs)
 }

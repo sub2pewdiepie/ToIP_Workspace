@@ -1,7 +1,7 @@
 {
   "host": "db",
   "user": "postgres",
-  "password": "1337",
+  "password": "superSecret123",
   "dbname": "mydb",
   "port": 5432,
   "sslmode": "disable"
