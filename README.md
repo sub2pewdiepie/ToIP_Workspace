@@ -7,7 +7,7 @@ TO-DO:
 TO-DO:
 1. Dockerfile - DONE
 2. docker-compose - DONE
-3. Миграция
+3. Миграция - DONE
 4. GitHub Actions (сборка/тестирование)
 ## По четвёртой
 TO-DO:
