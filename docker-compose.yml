@@ -21,9 +21,9 @@
       restart: no
       shm_size: 128mb
       environment:
-        POSTGRES_HOST: user_db
+        # POSTGRES_HOST: user_db
         POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-        POSTGRES_DB: db
+        POSTGRES_DB: mydb
       networks:
           - net
       ports:
