@@ -4,6 +4,8 @@ import (
 	"errors"
 	"space/models"
 	"space/repositories"
+
+	"github.com/gin-gonic/gin"
 )
 
 // type GroupApplicationService struct {
@@ -43,9 +45,18 @@ func NewGroupApplicationService(repo *repositories.GroupApplicationRepository,
 	}
 }
 
-func (s *GroupApplicationService) ApplyToGroup(userID, groupID int32, message string) error {
-	// Check if already a member
-	isMember, err := s.groupUserRepo.IsMember(groupID, userID)
+func (s *GroupApplicationService) ApplyToGroup(c *gin.Context, groupID int32, message string) error {
+	username, exists := c.Get("username")
+	if !exists {
+		return errors.New("user not authenticated")
+	}
+
+	user, err := s.userRepo.GetByUsername(username.(string))
+	if err != nil {
+		return errors.New("failed to find authenticated user")
+	}
+
+	isMember, err := s.groupUserRepo.IsMember(groupID, user.UserID)
 	if err != nil {
 		return err
 	}
@@ -53,8 +64,7 @@ func (s *GroupApplicationService) ApplyToGroup(userID, groupID int32, message st
 		return errors.New("user is already a group member")
 	}
 
-	// Check if there's already a pending application
-	exists, err := s.repo.ExistsPending(groupID, userID)
+	exists, err = s.repo.ExistsPending(groupID, user.UserID)
 	if err != nil {
 		return err
 	}
@@ -62,19 +72,28 @@ func (s *GroupApplicationService) ApplyToGroup(userID, groupID int32, message st
 		return errors.New("application already submitted and pending")
 	}
 
-	// Create application
 	app := &models.GroupApplication{
 		GroupID: groupID,
-		UserID:  userID,
+		UserID:  user.UserID,
 		Status:  "pending",
 		Message: message,
 	}
 	return s.repo.Create(app)
 }
 
-func (s *GroupApplicationService) GetPendingApplications(userID int32) ([]models.GroupApplication, error) {
+func (s *GroupApplicationService) GetPendingApplications(c *gin.Context) ([]models.GroupApplication, error) {
 	// Fetch groups user moderates or admins
-	groupIDs, err := s.groupRepo.GetGroupsManagedBy(userID)
+	username, exists := c.Get("username")
+	if !exists {
+		return nil, errors.New("user not authenticated")
+	}
+
+	user, err := s.userRepo.GetByUsername(username.(string))
+	if err != nil {
+		return nil, errors.New("failed to find authenticated user")
+	}
+
+	groupIDs, err := s.groupRepo.GetGroupsManagedBy(user.UserID)
 	if err != nil {
 		return nil, err
 	}

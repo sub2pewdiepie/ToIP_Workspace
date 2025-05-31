@@ -110,7 +110,7 @@ func (h *GroupHandler) GetAllGroups(c *gin.Context) {
 // @Produce json
 // @Param Authorization header string true "Bearer JWT"
 // @Param group body models.Group true "Group data"
-// @Success 201 {object} models.Group
+// @Success 201 {object} dto.GroupDTO
 // @Failure 400 {object} map[string]string "Invalid request body or missing required fields"
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Router /api/groups [post]
@@ -124,7 +124,14 @@ func (h *GroupHandler) CreateGroup(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, group)
+	groupDTO := dto.GroupDTO{
+		ID:              group.ID,
+		Name:            group.Name,
+		AdminUsername:   group.Admin.Username,
+		AcademicGroupID: group.AcademicGroupID,
+		AcademicGroup:   group.AcademicGroup.Name,
+	}
+	c.JSON(http.StatusCreated, groupDTO)
 }
 
 // UpdateGroup godoc

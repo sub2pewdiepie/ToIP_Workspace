@@ -33,12 +33,6 @@ func (r *GroupApplicationRepository) UpdateStatus(appID int32, status string) er
 		Update("status", status).Error
 }
 
-// func (r *GroupApplicationRepository) UpdateStatus(groupID, userID int32, status string) error {
-// 	return r.db.Model(&models.GroupApplication{}).
-// 		Where("group_id = ? AND user_id = ?", groupID, userID).
-// 		Update("status", status).Error
-// }
-
 func (r *GroupApplicationRepository) ExistsPending(groupID, userID int32) (bool, error) {
 	var count int64
 	err := r.db.Model(&models.GroupApplication{}).

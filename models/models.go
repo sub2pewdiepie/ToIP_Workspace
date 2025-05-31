@@ -124,7 +124,7 @@ import (
 
 // AcademicGroup
 type AcademicGroup struct {
-	AcademicGroupID int32     `gorm:"primaryKey"`
+	AcademicGroupID int32     `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name            string    `gorm:"type:varchar(255);not null"`
 	CreatedAt       time.Time `gorm:"default:CURRENT_TIMESTAMP"`
 }
@@ -138,7 +138,7 @@ type OldGroup struct {
 	// AdminID         int32         `gorm:"foreignKey:AdminID;references:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	// AcademicGroup   AcademicGroup `gorm:"foreignKey:AcademicGroupID"`
 	// Admin           User          `gorm:"foreignKey:AdminID"`
-	ID              int32
+	ID              int32 `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name            string
 	CreatedAt       time.Time
 	AcademicGroupID int32
@@ -148,11 +148,11 @@ type OldGroup struct {
 }
 
 type Group struct {
-	ID              int32     `gorm:"primaryKey"`
-	Name            string    `gorm:"type:varchar(255)"`
+	ID              int32     `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name            string    `gorm:"type:varchar(255)" json:"name"`
 	CreatedAt       time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	AcademicGroupID int32     `gorm:"index"` // Foreign key to AcademicGroup
-	AdminID         int32     `gorm:"index"` // Foreign key to User (admin)
+	AcademicGroupID int32     `gorm:"index" json:"academic_group_id"` // Foreign key to AcademicGroup
+	AdminID         int32     `gorm:"index"`                          // Foreign key to User (admin)
 
 	AcademicGroup AcademicGroup
 
@@ -167,7 +167,7 @@ type GroupModer struct {
 
 // Users
 type User struct {
-	UserID       int32     `gorm:"primaryKey"`
+	UserID       int32     `gorm:"primaryKey;autoIncrement" json:"id"`
 	Username     string    `gorm:"type:varchar(255);not null"`
 	CreatedAt    time.Time `gorm:"default:CURRENT_TIMESTAMP"`
 	Email        string    `gorm:"type:varchar(255);not null"`
@@ -270,12 +270,12 @@ type Schedule struct {
 	TimeSlot TimeSlot
 }
 type GroupApplication struct {
-	ApplicationID int32     `gorm:"primaryKey;autoIncrement"`
-	GroupID       int32     `gorm:"not null"`
-	UserID        int32     `gorm:"not null"`
-	Message       string    `gorm:"type:text"`
-	Status        string    `gorm:"type:varchar(50);default:'pending'"` // pending, approved, rejected
-	CreatedAt     time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+	ApplicationID int32     `gorm:"primaryKey;autoIncrement" json:"application_id"`
+	GroupID       int32     `gorm:"not null" json:"group_id"`
+	UserID        int32     `gorm:"not null" json:"user_id"`
+	Message       string    `gorm:"type:text" json:"message"`
+	Status        string    `gorm:"type:varchar(50);default:'pending'" json:"status"` // pending, approved, rejected
+	CreatedAt     time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 
 	Group Group
 	User  User

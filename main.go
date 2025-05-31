@@ -67,6 +67,12 @@ func main() {
 	appService := services.NewGroupApplicationService(appRepo, groupRepo, groupModerRepo, userRepo, groupUserRepo)
 	appHandler := routes.NewGroupApplicationHandler(appService)
 
+	// Seed database
+
+	// if err := database.SeedAcademicGroups(database.DB, academicGroupRepo); err != nil {
+	// 	log.Fatalf("failed to seed academic groups: %v", err)
+	// }
+
 	// Public routes
 	router.POST("/login", routes.LoginHandler(authService))
 	router.POST("/register", routes.RegisterHandler(authService))
@@ -108,6 +114,8 @@ func main() {
 		protected.POST("/group-moders", groupModerHandler.CreateGroupModer)
 		protected.DELETE("/group-moders/:group_id/:user_id", groupModerHandler.DeleteGroupModer)
 		// Applications
+		protected.POST("/groups/applications", appHandler.CreateApplication)
+		protected.GET("/groups/applications/pending", appHandler.GetPendingApplications)
 		protected.PATCH("/groups/applications/:user_id/:group_id", appHandler.ReviewApplication)
 	}
 

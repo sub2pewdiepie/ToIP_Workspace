@@ -48,8 +48,15 @@ func (r *GroupRepository) GetAllWithPagination(page, pageSize int32) ([]models.G
 	return groups, total, nil
 }
 
+//	func (r *GroupRepository) Create(group *models.Group) error {
+//		return r.db.Create(group).Error
+//	}
 func (r *GroupRepository) Create(group *models.Group) error {
-	return r.db.Create(group).Error
+	if err := r.db.Create(group).Error; err != nil {
+		return err
+	}
+	// Preload Admin and AcademicGroup after creation
+	return r.db.Preload("AcademicGroup").Preload("Admin").First(group, "id = ?", group.ID).Error
 }
 
 func (r *GroupRepository) Update(group *models.Group) error {

@@ -33,3 +33,6 @@ func (r *AcademicGroupRepository) Update(academicGroup *models.AcademicGroup) er
 func (r *AcademicGroupRepository) Delete(id int32) error {
 	return r.db.Delete(&models.AcademicGroup{}, "academic_group_id = ?", id).Error
 }
+func (r *AcademicGroupRepository) GetByName(name string, academicGroup *models.AcademicGroup) error {
+	return r.db.Where("name = ?", name).First(academicGroup).Error
+}

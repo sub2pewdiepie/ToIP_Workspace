@@ -96,17 +96,50 @@ func (h *GroupApplicationHandler) CreateApplication(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("userID")
+	// userID, exists := c.Get("userID")
+	_, exists := c.Get("username")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	err := h.service.ApplyToGroup(userID.(int32), req.GroupID, req.Message)
+	err := h.service.ApplyToGroup(c, req.GroupID, req.Message)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Application submitted successfully"})
+}
+
+// GetPendingApplications godoc
+// @Summary Get pending group applications
+// @Description Retrieve all pending applications for groups where the user is an admin or moderator
+// @Tags group_applications
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer JWT"
+// @Success 200 {array} dto.GroupApplicationDTO
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/groups/applications/pending [get]
+func (h *GroupApplicationHandler) GetPendingApplications(c *gin.Context) {
+	_, exists := c.Get("username")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	applications, err := h.service.GetPendingApplications(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	applicationDTOs := make([]dto.GroupApplicationDTO, len(applications))
+	for i, app := range applications {
+		applicationDTOs[i] = dto.ToGroupApplicationDTO(&app)
+	}
+
+	c.JSON(http.StatusOK, applicationDTOs)
 }

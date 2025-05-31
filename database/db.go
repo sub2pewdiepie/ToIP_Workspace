@@ -7,7 +7,9 @@ import (
 	"log"
 	"os"
 	"space/models"
+	"space/repositories"
 	"strings"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -125,5 +127,28 @@ func ConnectDatabase() error {
 	}
 
 	log.Println("Database connected and migrated successfully.")
+	return nil
+}
+
+func SeedAcademicGroups(db *gorm.DB, repo *repositories.AcademicGroupRepository) error {
+	// Flush academic_groups table
+	if err := DB.Exec("DELETE FROM academic_groups").Error; err != nil {
+		log.Fatalf("Failed to flush database: %v", err)
+	}
+
+	log.Println("Database flushed successfully.")
+
+	groups := []models.AcademicGroup{
+		{AcademicGroupID: 1, Name: "ЭФМО-01-24", CreatedAt: time.Now()},
+		{AcademicGroupID: 2, Name: "ИКБО-14-20", CreatedAt: time.Now()},
+		{AcademicGroupID: 3, Name: "ИКБО-15-20", CreatedAt: time.Now()},
+	}
+
+	for _, ac_group := range groups {
+		if err := DB.Create(&ac_group).Error; err != nil {
+			log.Printf("Failed to seed academic group: %v", err)
+		}
+	}
+	log.Println("Academic groups seeded.")
 	return nil
 }
