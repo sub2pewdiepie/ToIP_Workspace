@@ -1,9 +1,8 @@
 name: Deploy to VPS
 
 on: push
-  # push:
-  #   branches:
-  #     - dev
+  # branches:
+  #   - dev
 
 jobs:
   deploy:
@@ -16,9 +15,19 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            # Set up SSH for GitHub access
+            mkdir -p ~/.ssh
+            echo "${{ secrets.REPO_SSH_KEY }}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+            # Clone the private repository using SSH
             cd sussy_project
             rm -rf ToIP_Workspace
-            git clone -b dev https://${{ github.repository_owner }}@github.com/${{ github.repository }}.git
+            git clone -b dev git@github.com:${{ github.repository }}.git ToIP_Workspace
+
+            # Build and deploy
+            cd ToIP_Workspace
             docker compose build --no-cache
             chmod +x ./gen_env.sh
             ./gen_env.sh
