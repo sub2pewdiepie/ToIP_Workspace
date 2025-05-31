@@ -5,6 +5,7 @@ routes-example.go
 .DS_Store
 .qodo
 certs/
+.vscode
 certbot-www/
 db_data/
 *.example
