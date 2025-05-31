@@ -1,0 +1,5 @@
+{"level":"info","msg":"Starting application","time":"2025-05-31T21:39:06+03:00"}
+{"database":"mydb","error":"failed to connect to `user=postgres database=mydb`: [::1]:5432 (localhost): server error: FATAL: database \"mydb\" does not exist (SQLSTATE 3D000)","host":"localhost","level":"error","msg":"Failed to connect to database","time":"2025-05-31T21:39:06+03:00"}
+{"error":"failed to connect to database mydb: failed to connect to `user=postgres database=mydb`: [::1]:5432 (localhost): server error: FATAL: database \"mydb\" does not exist (SQLSTATE 3D000)","level":"fatal","msg":"Failed to connect to database","time":"2025-05-31T21:39:06+03:00"}
+{"level":"info","msg":"Starting application","time":"2025-05-31T22:08:29+03:00"}
+{"event":"database_startup","level":"info","msg":"Database connected and migrated successfully","status":"success","time":"2025-05-31T22:08:29+03:00"}
