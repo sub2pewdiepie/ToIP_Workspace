@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: p606268
+    runs-on: self-hosted
     steps:
       - name: Execute SSH commands
         uses: appleboy/ssh-action@v1.0.0
