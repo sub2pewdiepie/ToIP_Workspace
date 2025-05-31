@@ -1,5 +1,5 @@
   version: '3.10'
-
+  
   services:
     go-api-basic-build-scratch:
       build: .
@@ -7,6 +7,8 @@
       ports:
         - "0.0.0.0:8080:8080"
       restart: no
+      networks:
+        - net
       depends_on:
         db:
           condition: service_healthy
@@ -15,13 +17,17 @@
     db:
       container_name: db
       image: postgres
+      hostname: db
       restart: no
       shm_size: 128mb
       environment:
+        POSTGRES_HOST: user_db
         POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-        POSTGRES_DB: mydb
+        POSTGRES_DB: db
+      networks:
+          - net
       ports:
-        - "0.0.0.0:5432:5432"
+        - "5432:5432"
       # volumes:
       #   - ./init:/docker-entrypoint-initdb.d 
       healthcheck:
@@ -43,5 +49,11 @@
         environment:
           DOMAIN: ${DOMAIN}
           EMAIL: ${EMAIL}
+        networks:
+          - net
         depends_on:
           - go-api-basic-build-scratch
+    
+  networks:
+    net:
+      driver: bridge

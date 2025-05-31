@@ -6,9 +6,14 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"space/models"
-	"strings"
 
+	"space/models"
+	"space/repositories"
+	"space/utils"
+	"strings"
+	"time"
+
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -82,10 +87,11 @@ func quoteIdentifier(name string) string {
 func ConnectDatabase() error {
 	config, err := LoadConfig("./config/config.json")
 	if err != nil {
+		utils.Logger.WithField("error", err).Error("Failed to load .env file")
 		return fmt.Errorf("error loading config: %w", err)
 	}
 	// Ensure the database exists
-	fmt.Printf("Database ensured.")
+	// fmt.Printf("Database ensured.")
 
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%d sslmode=%s",
@@ -95,6 +101,11 @@ func ConnectDatabase() error {
 		Logger: logger.Default.LogMode(logger.Info), // Enable SQL logging for debugging
 	})
 	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"database": config.DBName,
+			"host":     config.Host, // additional useful context
+		}).Error("Failed to connect to database")
 		return fmt.Errorf("failed to connect to database %s: %w", config.DBName, err)
 	}
 	// DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -117,12 +128,58 @@ func ConnectDatabase() error {
 		&models.Material{},      // Depends on Subject, User
 		&models.TimeSlot{},      // No dependencies
 		&models.Schedule{},      // Depends on Group, Subject, TimeSlot
+		&models.GroupApplication{},
 	)
-	fmt.Printf("no migratia")
 	if err != nil {
+		utils.Logger.
+			WithError(err).
+			WithField("action", "database_migration").
+			Error("Database migration failed")
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}
-
+	utils.Logger.WithFields(logrus.Fields{
+		"event":  "database_startup",
+		"status": "success",
+	}).Info("Database connected and migrated successfully")
 	log.Println("Database connected and migrated successfully.")
+	return nil
+}
+
+func SeedAcademicGroups(db *gorm.DB, repo *repositories.AcademicGroupRepository) error {
+	// Flush academic_groups table
+	if err := DB.Exec("DELETE FROM academic_groups").Error; err != nil {
+		log.Fatalf("Failed to flush database: %v", err)
+	}
+	utils.Logger.WithFields(logrus.Fields{
+		"action": "database_flush",
+		"status": "success",
+	}).Info("Database flushed successfully")
+	log.Println("Database flushed successfully.")
+
+	groups := []models.AcademicGroup{
+		{AcademicGroupID: 1, Name: "ЭФМО-01-24", CreatedAt: time.Now()},
+		{AcademicGroupID: 2, Name: "ИКБО-14-20", CreatedAt: time.Now()},
+		{AcademicGroupID: 3, Name: "ИКБО-15-20", CreatedAt: time.Now()},
+	}
+
+	for _, ac_group := range groups {
+		if err := DB.Create(&ac_group).Error; err != nil {
+			utils.Logger.WithFields(logrus.Fields{
+				"error":      err,
+				"group_id":   ac_group.AcademicGroupID,
+				"group_name": ac_group.Name,
+				"operation":  "seed_academic_group",
+			}).Error("Failed to seed academic group")
+			log.Printf("Failed to seed academic group: %v", err)
+		}
+	}
+	// Successful seeding
+	utils.Logger.WithFields(logrus.Fields{
+		"event":  "data_seeding",
+		"entity": "academic_groups",
+		"count":  len(groups),
+		// "duration_ms": time.Since(startTime).Milliseconds(),
+	}).Info("Academic groups seeded successfully")
+	log.Println("Academic groups seeded.")
 	return nil
 }

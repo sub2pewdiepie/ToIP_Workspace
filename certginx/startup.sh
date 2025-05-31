@@ -29,8 +29,8 @@ if [ ! -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
     
     # Для продакшена уберите --staging
     certbot certonly --webroot -n --agree-tos --email $EMAIL -d $DOMAIN \
-        --webroot-path /var/www/certbot \
-        --staging || { echo "Ошибка получения сертификата"; exit 1; }
+        --webroot-path /var/www/certbot
+        # --staging || { echo "Ошибка получения сертификата"; exit 1; }
 fi
 
 # Останавливаем временный Nginx

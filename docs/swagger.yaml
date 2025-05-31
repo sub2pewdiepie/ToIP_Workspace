@@ -1,5 +1,129 @@
 basePath: /
 definitions:
+  dto.CreateApplicationRequest:
+    properties:
+      group_id:
+        type: integer
+      message:
+        type: string
+    required:
+    - group_id
+    type: object
+  dto.GetGroupsResponse:
+    properties:
+      groups:
+        items:
+          $ref: '#/definitions/dto.GroupDTO'
+        type: array
+      pagination:
+        $ref: '#/definitions/dto.PaginationMeta'
+    type: object
+  dto.GroupDTO:
+    properties:
+      academic_group_id:
+        type: integer
+      academic_group_name:
+        type: string
+      admin_username:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  dto.PaginationMeta:
+    properties:
+      page:
+        example: 1
+        type: integer
+      page_size:
+        example: 10
+        type: integer
+      pages:
+        example: 3
+        type: integer
+      total:
+        example: 25
+        type: integer
+    type: object
+  models.AcademicGroup:
+    properties:
+      academicGroupID:
+        type: integer
+      createdAt:
+        type: string
+      name:
+        type: string
+    type: object
+  models.Group:
+    properties:
+      academicGroup:
+        $ref: '#/definitions/models.AcademicGroup'
+      academicGroupID:
+        description: Foreign key to AcademicGroup
+        type: integer
+      admin:
+        $ref: '#/definitions/models.User'
+      adminID:
+        description: Foreign key to User (admin)
+        type: integer
+      createdAt:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.GroupModer:
+    properties:
+      groupID:
+        type: integer
+      userID:
+        type: integer
+    type: object
+  models.GroupUser:
+    properties:
+      group:
+        $ref: '#/definitions/models.Group'
+      groupID:
+        type: integer
+      joinedAt:
+        type: string
+      role:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      userID:
+        type: integer
+    type: object
+  models.Subject:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      group:
+        $ref: '#/definitions/models.Group'
+      groupID:
+        type: integer
+      name:
+        type: string
+      subjectID:
+        type: integer
+    type: object
+  models.User:
+    properties:
+      createdAt:
+        type: string
+      email:
+        type: string
+      hashPassword:
+        type: string
+      userID:
+        type: integer
+      username:
+        type: string
+    type: object
   routes.Credentials:
     properties:
       password:
@@ -20,7 +144,15 @@ definitions:
     - password
     - username
     type: object
-host: 178.208.64.200:8080
+  routes.ReviewStatusRequest:
+    properties:
+      status:
+        enum:
+        - approved
+        - rejected
+        type: string
+    type: object
+host: 185.221.155.133:8080
 info:
   contact:
     email: vasyutin.i.a@edu.mirea.ru, saakovi.d.@edu.mirea.ru, pronin.p.v@edu.mirea.ru
@@ -29,9 +161,1013 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
-  title: Сваггер документация api
+  title: СВАГА
   version: "1.0"
 paths:
+  /api/academic-groups:
+    post:
+      consumes:
+      - application/json
+      description: Creates an academic group with the provided name
+      parameters:
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: AcademicGroup data
+        in: body
+        name: academic_group
+        required: true
+        schema:
+          $ref: '#/definitions/models.AcademicGroup'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.AcademicGroup'
+        "400":
+          description: Invalid request body or missing required fields
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new academic group
+      tags:
+      - academic-groups
+  /api/academic-groups/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an academic group by ID
+      parameters:
+      - description: Academic Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Academic group deleted
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid academic group ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Academic group not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete an academic group
+      tags:
+      - academic-groups
+    get:
+      consumes:
+      - application/json
+      description: Retrieves an academic group
+      parameters:
+      - description: Academic Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AcademicGroup'
+        "400":
+          description: Invalid academic group ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Academic group not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get an academic group by ID
+      tags:
+      - academic-groups
+    patch:
+      consumes:
+      - application/json
+      description: Updates an academic group's name
+      parameters:
+      - description: Academic Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: AcademicGroup data (name only)
+        in: body
+        name: academic_group
+        required: true
+        schema:
+          $ref: '#/definitions/models.AcademicGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AcademicGroup'
+        "400":
+          description: Invalid academic group ID or request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Academic group not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update an academic group
+      tags:
+      - academic-groups
+  /api/group-moders:
+    post:
+      consumes:
+      - application/json
+      description: Creates a group-moderator relationship
+      parameters:
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: GroupModer data
+        in: body
+        name: group_moder
+        required: true
+        schema:
+          $ref: '#/definitions/models.GroupModer'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.GroupModer'
+        "400":
+          description: Invalid request body or moderator already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Add a moderator to a group
+      tags:
+      - group-moders
+  /api/group-moders/{group_id}/{user_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a group-moderator relationship
+      parameters:
+      - description: Group ID
+        in: path
+        name: group_id
+        required: true
+        type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group-moderator deleted
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid group or user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Group-moderator not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Remove a moderator from a group
+      tags:
+      - group-moders
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a group-moderator relationship
+      parameters:
+      - description: Group ID
+        in: path
+        name: group_id
+        required: true
+        type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GroupModer'
+        "400":
+          description: Invalid group or user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Group-moderator not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a group-moderator relationship
+      tags:
+      - group-moders
+  /api/group-users:
+    post:
+      consumes:
+      - application/json
+      description: Creates a group-user relationship with a role
+      parameters:
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: GroupUser data
+        in: body
+        name: group_user
+        required: true
+        schema:
+          $ref: '#/definitions/models.GroupUser'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.GroupUser'
+        "400":
+          description: Invalid request body or missing required fields
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Add a user to a group
+      tags:
+      - group-users
+  /api/group-users/{group_id}/{user_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a group-user relationship
+      parameters:
+      - description: Group ID
+        in: path
+        name: group_id
+        required: true
+        type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group-user deleted
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid group or user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Group-user not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Remove a user from a group
+      tags:
+      - group-users
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a group-user relationship with preloaded Group and User
+        data
+      parameters:
+      - description: Group ID
+        in: path
+        name: group_id
+        required: true
+        type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GroupUser'
+        "400":
+          description: Invalid group or user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Group-user not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a group-user relationship
+      tags:
+      - group-users
+    patch:
+      consumes:
+      - application/json
+      description: Updates the role of a group-user relationship
+      parameters:
+      - description: Group ID
+        in: path
+        name: group_id
+        required: true
+        type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: GroupUser data (role only)
+        in: body
+        name: group_user
+        required: true
+        schema:
+          $ref: '#/definitions/models.GroupUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GroupUser'
+        "400":
+          description: Invalid group ID, user ID, or request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Group-user not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update a group-user role
+      tags:
+      - group-users
+  /api/groups:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of groups with name, admin name, and
+        academic group
+      parameters:
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 10)
+        in: query
+        name: page_size
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetGroupsResponse'
+        "400":
+          description: Invalid page or page_size
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all groups with pagination
+      tags:
+      - groups
+    post:
+      consumes:
+      - application/json
+      description: Creates a group with the provided details, setting the authenticated
+        user as admin
+      parameters:
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Group data
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/models.Group'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Group'
+        "400":
+          description: Invalid request body or missing required fields
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new group
+      tags:
+      - groups
+  /api/groups/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a group by ID
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group deleted
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid group ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Group not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a group
+      tags:
+      - groups
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a group with preloaded AcademicGroup and Admin data
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Group'
+        "400":
+          description: Invalid group ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Group not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a group by ID
+      tags:
+      - groups
+    patch:
+      consumes:
+      - application/json
+      description: Updates a group's name or academic_group_id, restricted to the
+        group admin
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Group data (partial)
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/models.Group'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Group'
+        "400":
+          description: Invalid group ID, request body, or unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Group not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update a group
+      tags:
+      - groups
+  /api/groups/applications:
+    post:
+      consumes:
+      - application/json
+      description: Submit an application to join a group
+      parameters:
+      - description: Application info
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateApplicationRequest'
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Application submitted
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Validation or business logic error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Apply to a group
+      tags:
+      - group_applications
+  /api/groups/applications/{id}/review:
+    patch:
+      consumes:
+      - application/json
+      description: Approve or reject a group application by its ID
+      parameters:
+      - description: Application ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Review status (approved or rejected)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/routes.ReviewStatusRequest'
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Application not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Review a group application
+      tags:
+      - group_applications
+  /api/subjects:
+    post:
+      consumes:
+      - application/json
+      description: Creates a subject with the provided details
+      parameters:
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Subject data
+        in: body
+        name: subject
+        required: true
+        schema:
+          $ref: '#/definitions/models.Subject'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Subject'
+        "400":
+          description: Invalid request body or missing required fields
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new subject
+      tags:
+      - subjects
+  /api/subjects/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a subject by ID
+      parameters:
+      - description: Subject ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subject deleted
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid subject ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Subject not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a subject
+      tags:
+      - subjects
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a subject with preloaded Group data
+      parameters:
+      - description: Subject ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Subject'
+        "400":
+          description: Invalid subject ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Subject not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a subject by ID
+      tags:
+      - subjects
+    patch:
+      consumes:
+      - application/json
+      description: Updates a subject's name, description, or group_id
+      parameters:
+      - description: Subject ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Subject data (partial)
+        in: body
+        name: subject
+        required: true
+        schema:
+          $ref: '#/definitions/models.Subject'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Subject'
+        "400":
+          description: Invalid subject ID or request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Subject not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update a subject
+      tags:
+      - subjects
   /login:
     post:
       consumes:

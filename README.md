@@ -7,19 +7,19 @@ TO-DO:
 TO-DO:
 1. Dockerfile - DONE
 2. docker-compose - DONE
-3. Миграция
+3. Миграция - DONE
 4. GitHub Actions (сборка/тестирование)
 ## По четвёртой
 TO-DO:
-1. NGINX
+1. NGINX - DONE
 2. Переписать README (Описание/Технологии/Структура проекта)
 3. Проверить балансировщик
 ## По пятой
 TO-DO:
-1. Логирование через logrus
-2. Запись логов в app.log
+1. Логирование через logrus - DONE
+2. Запись логов в app.log -DONE
 ## По шестой
 TO-DO:
-1. Регистрация и вход по JWT - DONE?
-2. Middleware для проверки токена - DONE?
+1. Регистрация и вход по JWT - DONE
+2. Middleware для проверки токена - DONE
 3. Защита маршрутов - ?
