@@ -8,7 +8,7 @@ TO-DO:
 1. Dockerfile - DONE
 2. docker-compose - DONE
 3. Миграция - DONE
-4. GitHub Actions (сборка/тестирование)
+4. GitHub Actions (сборка/тестирование) - PENDING
 ## По четвёртой
 TO-DO:
 1. NGINX - DONE
