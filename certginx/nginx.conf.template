@@ -29,9 +29,13 @@ http {
 
     server {
         listen 80;
-        #listen [::]:80 ipv6only=on default_server;
+        server_name ${DOMAIN};
+        return 301 https://$host$request_uri;
+    }
 
-        listen 443 ssl;
+
+    server {
+        listen 443 ssl http2;
         server_name ${DOMAIN};
         ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
         ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
@@ -46,6 +50,8 @@ http {
         
         client_max_body_size 10m;
         proxy_hide_header X-Powered-By;
+
+        
 
         location / {
             proxy_pass http://backend;
