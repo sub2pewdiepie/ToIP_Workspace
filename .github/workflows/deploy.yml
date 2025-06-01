@@ -33,15 +33,12 @@ jobs:
             touch config/config.json
             cat > config/config.json <<EOL
             {
-
-            "user": "${{ secrets.POSTGRES_USER }}",
-            "password": "${{ secrets.POSTGRES_PASSWORD }}",
-            "dbname": "${{ secrets.DBNAME }}",
-            "host": "${{ secrets.HOST }}",
-            "port": "${{secrets.PORT}}"
-
-
-             }
+              "user": "${{ secrets.POSTGRES_USER }}",
+              "password": "${{ secrets.POSTGRES_PASSWORD }}",
+              "dbname": "${{ secrets.DBNAME }}",
+              "host": "${{ secrets.HOST }}",
+              "port": "${{secrets.PORT}}"
+            }
             EOL
             echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
             echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
