@@ -46,6 +46,7 @@ jobs:
             echo "POSTGRES_DB=${{ secrets.DBNAME }}" >> .env
             echo "LOG_FORMAT=${{ secrets.LOG_FORMAT }}" >> .env
             echo "LOG_LEVEL=${{ secrets.LOG_LEVEL }}" >> .env
+            echo "EMAIL=${{ secrets.EMAIL }}" >> .env
             # Build and deploy
             docker compose build --no-cache
             chmod +x ./gen_env.sh
