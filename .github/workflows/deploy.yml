@@ -29,6 +29,8 @@ jobs:
             # Prepare files
 
             cd ToIP_Workspace
+            mkdir -p config
+            touch config/config.json
             cat > config/config.json <<EOL
             {
 
@@ -47,6 +49,7 @@ jobs:
             echo "LOG_FORMAT=${{ secrets.LOG_FORMAT }}" >> .env
             echo "LOG_LEVEL=${{ secrets.LOG_LEVEL }}" >> .env
             echo "EMAIL=${{ secrets.EMAIL }}" >> .env
+            echo "DOMAIN=${{ secrets.DOMAIN }}" >> .env
             # Build and deploy
             docker compose build --no-cache
             chmod +x ./gen_env.sh
