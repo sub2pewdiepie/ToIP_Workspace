@@ -37,7 +37,7 @@ jobs:
               "password": "${{ secrets.POSTGRES_PASSWORD }}",
               "dbname": "${{ secrets.DBNAME }}",
               "host": "${{ secrets.HOST }}",
-              "port": "${{secrets.PORT}}"
+              "port": ${{secrets.PORT}}
             }
             EOL
             echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
