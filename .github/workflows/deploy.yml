@@ -24,10 +24,29 @@ jobs:
             # Clone the private repository using SSH
             cd sussy_project
             rm -rf ToIP_Workspace
-            git clone -b dev git@github.com:${{ github.repository }}.git ToIP_Workspace
+            git clone -b main git@github.com:${{ github.repository }}.git ToIP_Workspace
+            
+            # Prepare files
 
-            # Build and deploy
             cd ToIP_Workspace
+            cat > config/config.json <<EOL
+            {
+
+            "user": "${{ secrets.POSTGRES_USER }}",
+            "password": "${{ secrets.POSTGRES_PASSWORD }}",
+            "dbname": "${{ secrets.DBNAME }}",
+            "host": "${{ secrets.HOST }}",
+            "port": "${{secrets.PORT}}"
+
+
+             }
+            EOL
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
+            echo "POSTGRES_DB=${{ secrets.DBNAME }}" >> .env
+            echo "LOG_FORMAT=${{ secrets.LOG_FORMAT }}" >> .env
+            echo "LOG_LEVEL=${{ secrets.LOG_LEVEL }}" >> .env
+            # Build and deploy
             docker compose build --no-cache
             chmod +x ./gen_env.sh
             ./gen_env.sh

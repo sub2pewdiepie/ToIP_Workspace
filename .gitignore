@@ -10,3 +10,4 @@ certbot-www/
 db_data/
 *.example
 sussibd.session.sql
+config.json
