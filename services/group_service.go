@@ -5,8 +5,10 @@ import (
 	"space/models"
 	"space/models/dto"
 	"space/repositories"
+	"space/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type GroupService struct {
@@ -44,25 +46,43 @@ func (s *GroupService) GetAllGroups(page, pageSize int32) ([]dto.GroupDTO, int64
 
 func (s *GroupService) CreateGroup(c *gin.Context, group *models.Group) error {
 	if group.Name == "" || group.AcademicGroupID == 0 {
+		utils.Logger.WithFields(logrus.Fields{}).Error("name and academic_group_id are required")
 		return errors.New("name and academic_group_id are required")
 	}
 
 	// Get authenticated user's username from context
 	username, exists := c.Get("username")
 	if !exists {
+		utils.Logger.WithFields(logrus.Fields{
+			"username": username,
+			"exists":   exists,
+		}).Error("user not authenticated")
+
 		return errors.New("user not authenticated")
 	}
 
 	// Fetch user to get their ID
 	user, err := s.userRepo.GetByUsername(username.(string))
 	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"username": username,
+			"error":    err,
+		}).Error("failed to find user")
 		return errors.New("failed to find authenticated user")
 	}
 
 	// Set AdminID to the authenticated user's ID
 	group.AdminID = user.UserID
+	if err := s.groupRepo.Create(group); err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+			"name":     group.Name,
+		}).Error("failed to create new group")
+		return err
+	}
 
-	return s.groupRepo.Create(group)
+	return nil
 }
 
 func (s *GroupService) UpdateGroup(c *gin.Context, group *models.Group) error {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"space/auth"
 	"space/database"
@@ -71,9 +72,9 @@ func main() {
 
 	// Seed database
 
-	// if err := database.SeedAcademicGroups(database.DB, academicGroupRepo); err != nil {
-	// 	log.Fatalf("failed to seed academic groups: %v", err)
-	// }
+	if err := database.SeedAcademicGroups(database.DB, academicGroupRepo); err != nil {
+		log.Fatalf("failed to seed academic groups: %v", err)
+	}
 
 	// Public routes
 	router.POST("/login", routes.LoginHandler(authService))

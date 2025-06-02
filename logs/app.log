@@ -1,5 +1,16 @@
-{"level":"info","msg":"Starting application","time":"2025-05-31T21:39:06+03:00"}
-{"database":"mydb","error":"failed to connect to `user=postgres database=mydb`: [::1]:5432 (localhost): server error: FATAL: database \"mydb\" does not exist (SQLSTATE 3D000)","host":"localhost","level":"error","msg":"Failed to connect to database","time":"2025-05-31T21:39:06+03:00"}
-{"error":"failed to connect to database mydb: failed to connect to `user=postgres database=mydb`: [::1]:5432 (localhost): server error: FATAL: database \"mydb\" does not exist (SQLSTATE 3D000)","level":"fatal","msg":"Failed to connect to database","time":"2025-05-31T21:39:06+03:00"}
-{"level":"info","msg":"Starting application","time":"2025-05-31T22:08:29+03:00"}
-{"event":"database_startup","level":"info","msg":"Database connected and migrated successfully","status":"success","time":"2025-05-31T22:08:29+03:00"}
+{"level":"info","msg":"Starting application","time":"2025-06-02T10:18:51+03:00"}
+{"event":"database_startup","level":"info","msg":"Database connected and migrated successfully","status":"success","time":"2025-06-02T10:18:51+03:00"}
+{"action":"database_flush","level":"info","msg":"Database flushed successfully","status":"success","time":"2025-06-02T10:18:51+03:00"}
+{"count":3,"entity":"academic_groups","event":"data_seeding","level":"info","msg":"Academic groups seeded successfully","time":"2025-06-02T10:18:51+03:00"}
+{"level":"info","msg":"Starting application","time":"2025-06-02T10:33:54+03:00"}
+{"database":"mydb","error":"failed to connect to `user=postgres database=mydb`: hostname resolving error: lookup db: no such host","host":"db","level":"error","msg":"Failed to connect to database","time":"2025-06-02T10:33:54+03:00"}
+{"error":"failed to connect to database mydb: failed to connect to `user=postgres database=mydb`: hostname resolving error: lookup db: no such host","level":"fatal","msg":"Failed to connect to database","time":"2025-06-02T10:33:54+03:00"}
+{"level":"info","msg":"Starting application","time":"2025-06-02T10:35:17+03:00"}
+{"event":"database_startup","level":"info","msg":"Database connected and migrated successfully","status":"success","time":"2025-06-02T10:35:17+03:00"}
+{"action":"database_flush","level":"info","msg":"Database flushed successfully","status":"success","time":"2025-06-02T10:35:17+03:00"}
+{"count":3,"entity":"academic_groups","event":"data_seeding","level":"info","msg":"Academic groups seeded successfully","time":"2025-06-02T10:35:17+03:00"}
+{"level":"info","msg":"Starting application","time":"2025-06-02T10:35:41+03:00"}
+{"event":"database_startup","level":"info","msg":"Database connected and migrated successfully","status":"success","time":"2025-06-02T10:35:42+03:00"}
+{"action":"database_flush","level":"info","msg":"Database flushed successfully","status":"success","time":"2025-06-02T10:35:42+03:00"}
+{"count":3,"entity":"academic_groups","event":"data_seeding","level":"info","msg":"Academic groups seeded successfully","time":"2025-06-02T10:35:42+03:00"}
+{"level":"debug","method":"POST","msg":"Authenticated user","path":"/api/groups","time":"2025-06-02T10:38:16+03:00","username":"testuser"}

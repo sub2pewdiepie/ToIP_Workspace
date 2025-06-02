@@ -11,3 +11,4 @@ db_data/
 *.example
 sussibd.session.sql
 config.json
+app.logs
