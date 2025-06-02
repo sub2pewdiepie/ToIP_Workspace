@@ -1,16 +1,52 @@
-{"level":"info","msg":"Starting application","time":"2025-06-02T10:18:51+03:00"}
-{"event":"database_startup","level":"info","msg":"Database connected and migrated successfully","status":"success","time":"2025-06-02T10:18:51+03:00"}
-{"action":"database_flush","level":"info","msg":"Database flushed successfully","status":"success","time":"2025-06-02T10:18:51+03:00"}
-{"count":3,"entity":"academic_groups","event":"data_seeding","level":"info","msg":"Academic groups seeded successfully","time":"2025-06-02T10:18:51+03:00"}
-{"level":"info","msg":"Starting application","time":"2025-06-02T10:33:54+03:00"}
-{"database":"mydb","error":"failed to connect to `user=postgres database=mydb`: hostname resolving error: lookup db: no such host","host":"db","level":"error","msg":"Failed to connect to database","time":"2025-06-02T10:33:54+03:00"}
-{"error":"failed to connect to database mydb: failed to connect to `user=postgres database=mydb`: hostname resolving error: lookup db: no such host","level":"fatal","msg":"Failed to connect to database","time":"2025-06-02T10:33:54+03:00"}
-{"level":"info","msg":"Starting application","time":"2025-06-02T10:35:17+03:00"}
-{"event":"database_startup","level":"info","msg":"Database connected and migrated successfully","status":"success","time":"2025-06-02T10:35:17+03:00"}
-{"action":"database_flush","level":"info","msg":"Database flushed successfully","status":"success","time":"2025-06-02T10:35:17+03:00"}
-{"count":3,"entity":"academic_groups","event":"data_seeding","level":"info","msg":"Academic groups seeded successfully","time":"2025-06-02T10:35:17+03:00"}
-{"level":"info","msg":"Starting application","time":"2025-06-02T10:35:41+03:00"}
-{"event":"database_startup","level":"info","msg":"Database connected and migrated successfully","status":"success","time":"2025-06-02T10:35:42+03:00"}
-{"action":"database_flush","level":"info","msg":"Database flushed successfully","status":"success","time":"2025-06-02T10:35:42+03:00"}
-{"count":3,"entity":"academic_groups","event":"data_seeding","level":"info","msg":"Academic groups seeded successfully","time":"2025-06-02T10:35:42+03:00"}
-{"level":"debug","method":"POST","msg":"Authenticated user","path":"/api/groups","time":"2025-06-02T10:38:16+03:00","username":"testuser"}
+{"error":"invalid or expired token","level":"error","method":"POST","msg":"Invalid token","path":"/api/groups","time":"2025-06-02T11:55:31+03:00"}
+{"error":"invalid or expired token","level":"error","method":"GET","msg":"Invalid token","path":"/api/groups/applications/pending","time":"2025-06-02T11:55:58+03:00"}
+{"level":"debug","method":"GET","msg":"Authenticated user","path":"/api/groups/applications/pending","time":"2025-06-02T11:56:12+03:00","username":"applier"}
+{"level":"debug","msg":"Fetching pending applications","time":"2025-06-02T11:56:12+03:00","username":"applier"}
+{"application_count":0,"level":"info","msg":"Retrieved pending applications","time":"2025-06-02T11:56:12+03:00","username":"applier"}
+{"level":"debug","method":"GET","msg":"Authenticated user","path":"/api/groups/applications/pending","time":"2025-06-02T11:56:20+03:00","username":"testuser"}
+{"level":"debug","msg":"Fetching pending applications","time":"2025-06-02T11:56:20+03:00","username":"testuser"}
+{"application_count":2,"level":"info","msg":"Retrieved pending applications","time":"2025-06-02T11:56:20+03:00","username":"testuser"}
+{"level":"debug","method":"PATCH","msg":"Authenticated user","path":"/api/groups/applications","time":"2025-06-02T11:56:51+03:00","username":"testuser"}
+{"level":"debug","method":"PATCH","msg":"Authenticated user","path":"/api/groups/applications","time":"2025-06-02T11:56:57+03:00","username":"testuser"}
+{"level":"debug","method":"PATCH","msg":"Authenticated user","path":"/api/groups/applications","time":"2025-06-02T11:57:03+03:00","username":"testuser"}
+{"level":"debug","method":"PATCH","msg":"Authenticated user","path":"/api/groups/applications","time":"2025-06-02T11:57:09+03:00","username":"testuser"}
+{"error":"invalid or expired token","level":"error","method":"PATCH","msg":"Invalid token","path":"/api/groups/applications/:usesr_id/:group_id","time":"2025-06-02T12:06:30+03:00"}
+{"level":"debug","method":"PATCH","msg":"Authenticated user","path":"/api/groups/applications/:usesr_id/:group_id","time":"2025-06-02T12:06:43+03:00","username":"testuser"}
+{"error":"strconv.Atoi: parsing \":group_id\": invalid syntax","group_id":":group_id","level":"error","msg":"Invalid group ID","place":"handler","time":"2025-06-02T12:06:43+03:00"}
+{"level":"debug","method":"GET","msg":"Authenticated user","path":"/api/groups/applications/pending","time":"2025-06-02T12:06:50+03:00","username":"testuser"}
+{"level":"debug","msg":"Fetching pending applications","time":"2025-06-02T12:06:50+03:00","username":"testuser"}
+{"application_count":2,"level":"info","msg":"Retrieved pending applications","time":"2025-06-02T12:06:50+03:00","username":"testuser"}
+{"level":"debug","method":"PATCH","msg":"Authenticated user","path":"/api/groups/applications/:usesr_id/:group_id","time":"2025-06-02T12:07:03+03:00","username":"testuser"}
+{"error":"strconv.Atoi: parsing \":group_id\": invalid syntax","group_id":":group_id","level":"error","msg":"Invalid group ID","place":"handler","time":"2025-06-02T12:07:03+03:00"}
+{"level":"debug","method":"PATCH","msg":"Authenticated user","path":"/api/groups/applications/1/2","time":"2025-06-02T12:08:03+03:00","username":"testuser"}
+{"group_id":2,"level":"debug","msg":"Reviewing application","status":"approved","time":"2025-06-02T12:08:03+03:00","user_id":1,"username":"testuser"}
+{"error":"unauthorized: not an admin or moderator","group_id":2,"level":"error","msg":"Failed to review application","time":"2025-06-02T12:08:03+03:00","user_id":1,"username":"testuser"}
+{"level":"debug","method":"PATCH","msg":"Authenticated user","path":"/api/groups/applications/1/2","time":"2025-06-02T12:08:10+03:00","username":"testuser"}
+{"group_id":2,"level":"debug","msg":"Reviewing application","status":"approved","time":"2025-06-02T12:08:10+03:00","user_id":1,"username":"testuser"}
+{"error":"unauthorized: not an admin or moderator","group_id":2,"level":"error","msg":"Failed to review application","time":"2025-06-02T12:08:10+03:00","user_id":1,"username":"testuser"}
+{"level":"debug","method":"PATCH","msg":"Authenticated user","path":"/api/groups/applications/1/2","time":"2025-06-02T12:08:15+03:00","username":"testuser"}
+{"group_id":2,"level":"debug","msg":"Reviewing application","status":"approved","time":"2025-06-02T12:08:15+03:00","user_id":1,"username":"testuser"}
+{"error":"unauthorized: not an admin or moderator","group_id":2,"level":"error","msg":"Failed to review application","time":"2025-06-02T12:08:15+03:00","user_id":1,"username":"testuser"}
+{"level":"debug","method":"GET","msg":"Authenticated user","path":"/api/groups/applications/pending","time":"2025-06-02T12:08:22+03:00","username":"testuser"}
+{"level":"debug","msg":"Fetching pending applications","time":"2025-06-02T12:08:22+03:00","username":"testuser"}
+{"application_count":2,"level":"info","msg":"Retrieved pending applications","time":"2025-06-02T12:08:22+03:00","username":"testuser"}
+{"level":"debug","method":"PATCH","msg":"Authenticated user","path":"/api/groups/applications/2/2","time":"2025-06-02T12:08:32+03:00","username":"testuser"}
+{"group_id":2,"level":"debug","msg":"Reviewing application","status":"approved","time":"2025-06-02T12:08:32+03:00","user_id":2,"username":"testuser"}
+{"group_id":2,"level":"info","msg":"Application reviewed successfully","status":"approved","time":"2025-06-02T12:08:32+03:00","user_id":2,"username":"testuser"}
+{"level":"info","msg":"Starting application","time":"2025-06-02T15:55:00+03:00"}
+{"event":"database_startup","level":"info","msg":"Database connected and migrated successfully","status":"success","time":"2025-06-02T15:55:00+03:00"}
+{"level":"debug","method":"POST","msg":"Authenticated user","path":"/api/groups/applications","time":"2025-06-02T15:55:13+03:00","username":"testuser"}
+{"group_id":2,"level":"debug","msg":"Processing group application","time":"2025-06-02T15:55:13+03:00","username":"testuser"}
+{"group_id":2,"level":"debug","msg":"Checking group membership","time":"2025-06-02T15:55:13+03:00","user_id":2,"username":"testuser"}
+{"group_id":2,"level":"debug","msg":"Creating group application","time":"2025-06-02T15:55:13+03:00","user_id":2}
+{"group_id":2,"level":"info","msg":"Group application created","time":"2025-06-02T15:55:13+03:00","username":"testuser"}
+{"level":"debug","method":"POST","msg":"Authenticated user","path":"/api/groups/applications","time":"2025-06-02T15:55:14+03:00","username":"testuser"}
+{"group_id":2,"level":"debug","msg":"Processing group application","time":"2025-06-02T15:55:14+03:00","username":"testuser"}
+{"group_id":2,"level":"debug","msg":"Checking group membership","time":"2025-06-02T15:55:14+03:00","user_id":2,"username":"testuser"}
+{"group_id":2,"level":"warning","msg":"Application already submitted and pending","time":"2025-06-02T15:55:14+03:00","user_id":2}
+{"error":"application already submitted and pending","group_id":2,"level":"error","msg":"Failed to fetch application","time":"2025-06-02T15:55:14+03:00","username":"testuser"}
+{"level":"debug","method":"POST","msg":"Authenticated user","path":"/api/groups","time":"2025-06-02T15:55:23+03:00","username":"testuser"}
+{"level":"info","msg":"Starting application","time":"2025-06-02T15:56:32+03:00"}
+{"event":"database_startup","level":"info","msg":"Database connected and migrated successfully","status":"success","time":"2025-06-02T15:56:32+03:00"}
+{"level":"debug","method":"POST","msg":"Authenticated user","path":"/api/groups","time":"2025-06-02T15:58:13+03:00","username":"testuser"}
+{"error":"ERROR: insert or update on table \"groups\" violates foreign key constraint \"fk_groups_academic_group\" (SQLSTATE 23503)","level":"error","msg":"failed to create new group","name":"new","time":"2025-06-02T15:58:13+03:00","username":"testuser"}

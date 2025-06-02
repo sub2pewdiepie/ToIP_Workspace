@@ -163,47 +163,87 @@ func (s *GroupApplicationService) GetPendingApplications(c *gin.Context) ([]mode
 //		}
 //		return s.repo.UpdateStatus(appID, status)
 //	}
-func (s *GroupApplicationService) ReviewApplication(groupID, userID int32, username, status string) error {
+func (s *GroupApplicationService) ReviewApplication(groupID int32, targetUsername, reviewerUsername, status string) error {
+	utils.Logger.WithFields(logrus.Fields{
+		"reviewer": reviewerUsername,
+		"username": targetUsername,
+		"group_id": groupID,
+		"status":   status,
+	}).Debug("Processing application review")
+
 	if status != "approved" && status != "rejected" {
+		utils.Logger.WithField("status", status).Error("Invalid status")
 		return errors.New("invalid status")
 	}
 
-	// Check permissions
-	isAuthorized, err := s.groupRepo.IsAdminOrModerator(groupID, userID)
+	reviewer, err := s.userRepo.GetByUsername(reviewerUsername)
 	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"reviewer": reviewerUsername,
+		}).Error("Failed to find reviewer")
+		return errors.New("failed to find reviewer")
+	}
+
+	targetUser, err := s.userRepo.GetByUsername(targetUsername)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": targetUsername,
+		}).Error("Failed to find target user")
+		return errors.New("failed to find target user")
+	}
+
+	isAuthorized, err := s.groupRepo.IsAdminOrModerator(groupID, reviewer.UserID)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":       err,
+			"reviewer_id": reviewer.UserID,
+			"group_id":    groupID,
+		}).Error("Failed to check authorization")
 		return err
 	}
 	if !isAuthorized {
+		utils.Logger.WithFields(logrus.Fields{
+			"reviewer_id": reviewer.UserID,
+			"group_id":    groupID,
+		}).Error("Unauthorized: not an admin or moderator")
 		return errors.New("unauthorized: not an admin or moderator")
 	}
 
-	// Update status
-	return s.repo.UpdateStatusByGroupAndUser(groupID, userID, status)
-}
+	utils.Logger.WithFields(logrus.Fields{
+		"group_id": groupID,
+		"user_id":  targetUser.UserID,
+	}).Debug("Updating application status")
 
-func (s *GroupApplicationService) ApproveApplication(groupID, userID int32, actingUserID int32) error {
-	isAuthorized, err := s.groupRepo.IsAdminOrModerator(groupID, actingUserID)
-	if err != nil || !isAuthorized {
-		return errors.New("not authorized to approve applications")
-	}
-
-	// Check application exists and is pending
-	app, err := s.repo.GetByGroupAndUser(groupID, userID)
-	if err != nil || app.Status != "pending" {
-		return errors.New("no pending application found")
-	}
-
-	// Approve application
-	err = s.repo.UpdateStatus(app.ApplicationID, "approved")
-	if err != nil {
+	if err := s.repo.UpdateStatusByGroupAndUser(groupID, targetUser.UserID, status); err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupID,
+			"user_id":  targetUser.UserID,
+		}).Error("Failed to update application status")
 		return err
 	}
 
-	// Add to GroupUser
-	return s.groupUserRepo.Create(&models.GroupUser{
-		GroupID: groupID,
-		UserID:  userID,
-	})
+	if status == "approved" {
+		utils.Logger.WithFields(logrus.Fields{
+			"group_id": groupID,
+			"user_id":  targetUser.UserID,
+		}).Debug("Creating group user for approved application")
+		if err := s.groupUserRepo.Create(&models.GroupUser{
+			GroupID: groupID,
+			UserID:  targetUser.UserID,
+		}); err != nil {
+			utils.Logger.WithFields(logrus.Fields{
+				"error":    err,
+				"group_id": groupID,
+				"user_id":  targetUser.UserID,
+			}).Error("Failed to create group user")
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *GroupApplicationService) RejectApplication(groupID, userID int32, actingUserID int32) error {

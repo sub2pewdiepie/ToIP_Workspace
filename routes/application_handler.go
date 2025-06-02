@@ -21,7 +21,8 @@ func NewGroupApplicationHandler(service *services.GroupApplicationService) *Grou
 
 // ReviewStatusRequest represents the request body for reviewing an application
 type ReviewStatusRequest struct {
-	Status string `json:"status" enums:"approved,rejected"`
+	Username string `json:"username" binding:"required"`
+	Status   string `json:"status" binding:"required,oneof=approved rejected"`
 }
 
 // ReviewApplication godoc
@@ -41,68 +42,61 @@ type ReviewStatusRequest struct {
 // @Router /api/groups/applications/{id}/review [patch]
 func (h *GroupApplicationHandler) ReviewApplication(c *gin.Context) {
 	groupIDStr := c.Param("group_id")
-	userIDStr := c.Param("user_id")
+
+	utils.Logger.WithFields(logrus.Fields{
+		"group_id": groupIDStr,
+	}).Debug("Received review application request")
 
 	groupID, err := strconv.Atoi(groupIDStr)
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{
 			"error":    err,
 			"group_id": groupIDStr,
+			"place":    "handler",
 		}).Error("Invalid group ID")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid group ID"})
 		return
 	}
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
+
+	var req ReviewStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.Logger.WithFields(logrus.Fields{
-			"error":   err,
-			"user_id": userIDStr,
-		}).Error("Invalid user ID")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			"error": err,
+			"body":  req,
+		}).Error("Invalid request body")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid username or status"})
 		return
 	}
 
-	var req struct {
-		Status string `json:"status"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil || (req.Status != "approved" && req.Status != "rejected") {
-		utils.Logger.WithFields(logrus.Fields{
-			"error":  err,
-			"status": req.Status,
-		}).Error("Invalid status")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status. Must be 'approved' or 'rejected'"})
-		return
-	}
-
-	// Get the username from the context
 	username, exists := c.Get("username")
 	if !exists {
 		utils.Logger.Error("Unauthorized: username not found in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+
 	utils.Logger.WithFields(logrus.Fields{
-		"username": username,
-		"user_id":  userID,
+		"reviewer": username,
+		"username": req.Username,
 		"group_id": groupID,
 		"status":   req.Status,
 	}).Debug("Reviewing application")
 
-	// Call the service
-	err = h.service.ReviewApplication(int32(groupID), int32(userID), username.(string), req.Status)
+	err = h.service.ReviewApplication(int32(groupID), req.Username, username.(string), req.Status)
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{
 			"error":    err,
-			"username": username,
-			"user_id":  userID,
+			"reviewer": username,
+			"username": req.Username,
 			"group_id": groupID,
 		}).Error("Failed to review application")
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
+
 	utils.Logger.WithFields(logrus.Fields{
-		"username": username,
-		"user_id":  userID,
+		"reviewer": username,
+		"username": req.Username,
 		"group_id": groupID,
 		"status":   req.Status,
 	}).Info("Application reviewed successfully")

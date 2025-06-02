@@ -1,5 +1,7 @@
 package dto
 
+import "space/models"
+
 type GroupDTO struct {
 	ID              int32  `json:"id"`
 	Name            string `json:"name"`
@@ -20,4 +22,14 @@ type PaginationMeta struct {
 	PageSize int   `json:"page_size" example:"10"`
 	Total    int64 `json:"total" example:"25"`
 	Pages    int64 `json:"pages" example:"3"`
+}
+
+func ToGroupDTO(group *models.Group) GroupDTO {
+	return GroupDTO{
+		ID:              group.ID,
+		Name:            group.Name,
+		AdminUsername:   group.Admin.Username,
+		AcademicGroupID: group.AcademicGroupID,
+		AcademicGroup:   group.AcademicGroup.Name,
+	}
 }
