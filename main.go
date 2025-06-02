@@ -100,6 +100,7 @@ func main() {
 		protected.POST("/groups", groupHandler.CreateGroup)
 		protected.PATCH("/groups/:id", groupHandler.UpdateGroup)
 		protected.DELETE("/groups/:id", groupHandler.DeleteGroup)
+		protected.GET("/groups/available", groupHandler.GetAvailableGroups)
 		// Subject endpoints
 		protected.GET("/subjects/:id", subjectHandler.GetSubject)
 		protected.POST("/subjects", subjectHandler.CreateSubject)
