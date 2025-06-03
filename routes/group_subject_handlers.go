@@ -373,11 +373,9 @@ func (h *SubjectHandler) UpdateSubject(c *gin.Context) {
 	if input.Name != "" {
 		subject.Name = input.Name
 	}
-	if input.Description != "" {
-		subject.Description = input.Description
-	}
-	if input.GroupID != 0 {
-		subject.GroupID = input.GroupID
+
+	if input.AcademicGroupID != 0 {
+		subject.AcademicGroupID = input.AcademicGroupID
 	}
 	if err := h.service.UpdateSubject(subject); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

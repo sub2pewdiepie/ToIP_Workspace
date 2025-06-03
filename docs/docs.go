@@ -875,7 +875,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/models.Group"
+                            "$ref": "#/definitions/dto.GroupDTO"
                         }
                     },
                     "400": {
@@ -951,6 +951,59 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/groups/applications/pending": {
+            "get": {
+                "description": "Retrieve all pending applications for groups where the user is an admin or moderator",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "group_applications"
+                ],
+                "summary": "Get pending group applications",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.GroupApplicationDTO"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1038,6 +1091,79 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Application not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/groups/available": {
+            "get": {
+                "description": "Get a paginated list of groups where the user is not a member, admin, or moderator",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Get groups available to apply to",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetGroupsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1652,6 +1778,32 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.GroupApplicationDTO": {
+            "type": "object",
+            "properties": {
+                "application_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "group_id": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.GroupDTO": {
             "type": "object",
             "properties": {
@@ -1696,11 +1848,11 @@ const docTemplate = `{
         "models.AcademicGroup": {
             "type": "object",
             "properties": {
-                "academicGroupID": {
-                    "type": "integer"
-                },
                 "createdAt": {
                     "type": "string"
+                },
+                "id": {
+                    "type": "integer"
                 },
                 "name": {
                     "type": "string"
@@ -1713,7 +1865,7 @@ const docTemplate = `{
                 "academicGroup": {
                     "$ref": "#/definitions/models.AcademicGroup"
                 },
-                "academicGroupID": {
+                "academic_group_id": {
                     "description": "Foreign key to AcademicGroup",
                     "type": "integer"
                 },
@@ -1772,17 +1924,14 @@ const docTemplate = `{
         "models.Subject": {
             "type": "object",
             "properties": {
+                "academicGroup": {
+                    "$ref": "#/definitions/models.AcademicGroup"
+                },
+                "academicGroupID": {
+                    "type": "integer"
+                },
                 "createdAt": {
                     "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "group": {
-                    "$ref": "#/definitions/models.Group"
-                },
-                "groupID": {
-                    "type": "integer"
                 },
                 "name": {
                     "type": "string"
@@ -1804,7 +1953,7 @@ const docTemplate = `{
                 "hashPassword": {
                     "type": "string"
                 },
-                "userID": {
+                "id": {
                     "type": "integer"
                 },
                 "username": {
@@ -1844,6 +1993,10 @@ const docTemplate = `{
         },
         "routes.ReviewStatusRequest": {
             "type": "object",
+            "required": [
+                "status",
+                "username"
+            ],
             "properties": {
                 "status": {
                     "type": "string",
@@ -1851,6 +2004,9 @@ const docTemplate = `{
                         "approved",
                         "rejected"
                     ]
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         }

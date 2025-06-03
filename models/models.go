@@ -186,12 +186,19 @@ type GroupUser struct {
 
 // Subjects
 type Subject struct {
-	SubjectID   int32     `gorm:"primaryKey"`
-	GroupID     int32     `gorm:"foreignKey:GroupID;references:GroupID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
-	Name        string    `gorm:"type:varchar(255);not null"`
-	Description string    `gorm:"type:text"`
-	CreatedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	Group       Group     `gorm:"foreignKey:GroupID"`
+	SubjectID       int32     `gorm:"primaryKey"`
+	AcademicGroupID int32     `gorm:"foreignKey:AcademicGroupID;references:AcademicGroupID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Name            string    `gorm:"type:varchar(255);not null"`
+	CreatedAt       time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+	AcademicGroup   AcademicGroup
+}
+type OldSubject struct {
+	SubjectID int32  `gorm:"primaryKey"`
+	GroupID   int32  `gorm:"foreignKey:GroupID;references:GroupID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Name      string `gorm:"type:varchar(255);not null"`
+
+	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+	Group     Group     `gorm:"foreignKey:GroupID"`
 }
 
 // Tasks

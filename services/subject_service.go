@@ -19,7 +19,7 @@ func (s *SubjectService) GetSubjectByID(id int32) (*models.Subject, error) {
 }
 
 func (s *SubjectService) CreateSubject(subject *models.Subject) error {
-	if subject.Name == "" || subject.GroupID == 0 {
+	if subject.Name == "" || subject.AcademicGroupID == 0 {
 		return errors.New("name and group_id are required")
 	}
 	return s.subjectRepo.Create(subject)

@@ -8,10 +8,8 @@ import (
 	"os"
 
 	"space/models"
-	"space/repositories"
 	"space/utils"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
@@ -127,7 +125,7 @@ func ConnectDatabase() error {
 		&models.Task{},          // Depends on Subject, User
 		&models.Material{},      // Depends on Subject, User
 		&models.TimeSlot{},      // No dependencies
-		&models.Schedule{},      // Depends on Group, Subject, TimeSlot
+		&models.Schedule{},      // Depends on AcademicGroup, Subject, TimeSlot
 		&models.GroupApplication{},
 	)
 	if err != nil {
@@ -142,44 +140,5 @@ func ConnectDatabase() error {
 		"status": "success",
 	}).Info("Database connected and migrated successfully")
 	log.Println("Database connected and migrated successfully.")
-	return nil
-}
-
-func SeedAcademicGroups(db *gorm.DB, repo *repositories.AcademicGroupRepository) error {
-	// Flush academic_groups table
-	if err := DB.Exec("DELETE FROM academic_groups").Error; err != nil {
-		log.Fatalf("Failed to flush database: %v", err)
-	}
-	utils.Logger.WithFields(logrus.Fields{
-		"action": "database_flush",
-		"status": "success",
-	}).Info("Database flushed successfully")
-	log.Println("Database flushed successfully.")
-
-	groups := []models.AcademicGroup{
-		{AcademicGroupID: 1, Name: "ЭФМО-01-24", CreatedAt: time.Now()},
-		{AcademicGroupID: 2, Name: "ИКБО-14-20", CreatedAt: time.Now()},
-		{AcademicGroupID: 3, Name: "ИКБО-15-20", CreatedAt: time.Now()},
-	}
-
-	for _, ac_group := range groups {
-		if err := DB.Create(&ac_group).Error; err != nil {
-			utils.Logger.WithFields(logrus.Fields{
-				"error":      err,
-				"group_id":   ac_group.AcademicGroupID,
-				"group_name": ac_group.Name,
-				"operation":  "seed_academic_group",
-			}).Error("Failed to seed academic group")
-			log.Printf("Failed to seed academic group: %v", err)
-		}
-	}
-	// Successful seeding
-	utils.Logger.WithFields(logrus.Fields{
-		"event":  "data_seeding",
-		"entity": "academic_groups",
-		"count":  len(groups),
-		// "duration_ms": time.Since(startTime).Milliseconds(),
-	}).Info("Academic groups seeded successfully")
-	log.Println("Academic groups seeded.")
 	return nil
 }
