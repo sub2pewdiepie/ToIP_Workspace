@@ -2,7 +2,9 @@ package repositories
 
 import (
 	"space/models"
+	"space/utils"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -23,13 +25,40 @@ func (r *SubjectRepository) GetByID(id int32) (*models.Subject, error) {
 }
 
 func (r *SubjectRepository) Create(subject *models.Subject) error {
-	return r.db.Create(subject).Error
+	if err := r.db.Create(subject).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":             err,
+			"name":              subject.Name,
+			"academic_group_id": subject.AcademicGroupID,
+		}).Error("Failed to create subject")
+		return err
+	}
+	utils.Logger.WithFields(logrus.Fields{
+		"subject_id":        subject.SubjectID,
+		"name":              subject.Name,
+		"academic_group_id": subject.AcademicGroupID,
+	}).Debug("Subject created")
+	return nil
 }
-
 func (r *SubjectRepository) Update(subject *models.Subject) error {
 	return r.db.Save(subject).Error
 }
 
 func (r *SubjectRepository) Delete(id int32) error {
 	return r.db.Delete(&models.Subject{}, "subject_id = ?", id).Error
+}
+
+func (r *SubjectRepository) FindByName(name string) (*models.Subject, error) {
+	var subject models.Subject
+	if err := r.db.Where("name = ?", name).First(&subject).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, err
+		}
+		utils.Logger.WithFields(logrus.Fields{
+			"error": err,
+			"name":  name,
+		}).Error("Failed to find subject by name")
+		return nil, err
+	}
+	return &subject, nil
 }

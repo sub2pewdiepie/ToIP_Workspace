@@ -18,6 +18,23 @@ definitions:
       pagination:
         $ref: '#/definitions/dto.PaginationMeta'
     type: object
+  dto.GroupApplicationDTO:
+    properties:
+      application_id:
+        type: integer
+      created_at:
+        type: string
+      group_id:
+        type: integer
+      message:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: integer
+      username:
+        type: string
+    type: object
   dto.GroupDTO:
     properties:
       academic_group_id:
@@ -48,20 +65,20 @@ definitions:
     type: object
   models.AcademicGroup:
     properties:
-      academicGroupID:
-        type: integer
       createdAt:
         type: string
+      id:
+        type: integer
       name:
         type: string
     type: object
   models.Group:
     properties:
-      academicGroup:
-        $ref: '#/definitions/models.AcademicGroup'
-      academicGroupID:
+      academic_group_id:
         description: Foreign key to AcademicGroup
         type: integer
+      academicGroup:
+        $ref: '#/definitions/models.AcademicGroup'
       admin:
         $ref: '#/definitions/models.User'
       adminID:
@@ -98,14 +115,12 @@ definitions:
     type: object
   models.Subject:
     properties:
+      academicGroup:
+        $ref: '#/definitions/models.AcademicGroup'
+      academicGroupID:
+        type: integer
       createdAt:
         type: string
-      description:
-        type: string
-      group:
-        $ref: '#/definitions/models.Group'
-      groupID:
-        type: integer
       name:
         type: string
       subjectID:
@@ -119,7 +134,7 @@ definitions:
         type: string
       hashPassword:
         type: string
-      userID:
+      id:
         type: integer
       username:
         type: string
@@ -151,6 +166,11 @@ definitions:
         - approved
         - rejected
         type: string
+      username:
+        type: string
+    required:
+    - status
+    - username
     type: object
 host: 185.221.155.133:8080
 info:
@@ -737,7 +757,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.Group'
+            $ref: '#/definitions/dto.GroupDTO'
         "400":
           description: Invalid request body or missing required fields
           schema:
@@ -991,6 +1011,92 @@ paths:
       summary: Review a group application
       tags:
       - group_applications
+  /api/groups/applications/pending:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all pending applications for groups where the user is
+        an admin or moderator
+      parameters:
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.GroupApplicationDTO'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get pending group applications
+      tags:
+      - group_applications
+  /api/groups/available:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of groups where the user is not a member,
+        admin, or moderator
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetGroupsResponse'
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get groups available to apply to
+      tags:
+      - groups
   /api/subjects:
     post:
       consumes:

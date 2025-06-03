@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"space/auth"
 	"space/database"
@@ -49,8 +50,12 @@ func main() {
 	taskRepo := repositories.NewTaskRepository(database.DB)
 	taskService := services.NewTaskService(taskRepo)
 	taskHandler := routes.NewTaskHandler(taskService)
+
+	groupuserRepo := repositories.NewGroupUserRepository(database.DB)
+	// groupuserService := services.NewGroupUserService(groupuserRepo)
+
 	groupRepo := repositories.NewGroupRepository(database.DB)
-	groupService := services.NewGroupService(groupRepo, userRepo)
+	groupService := services.NewGroupService(groupRepo, userRepo, groupuserRepo)
 	groupHandler := routes.NewGroupHandler(groupService)
 	subjectRepo := repositories.NewSubjectRepository(database.DB)
 	subjectService := services.NewSubjectService(subjectRepo)
@@ -71,9 +76,12 @@ func main() {
 
 	// Seed database
 
-	// if err := database.SeedAcademicGroups(database.DB, academicGroupRepo); err != nil {
-	// 	log.Fatalf("failed to seed academic groups: %v", err)
-	// }
+	if err := database.SeedAcademicGroups(database.DB, academicGroupRepo); err != nil {
+		log.Fatalf("failed to seed academic groups: %v", err)
+	}
+	if err := database.SeedSubjects(database.DB, subjectRepo, academicGroupRepo); err != nil {
+		log.Fatalf("failed to seed academic groups: %v", err)
+	}
 
 	// Public routes
 	router.POST("/login", routes.LoginHandler(authService))
@@ -96,6 +104,7 @@ func main() {
 		protected.POST("/groups", groupHandler.CreateGroup)
 		protected.PATCH("/groups/:id", groupHandler.UpdateGroup)
 		protected.DELETE("/groups/:id", groupHandler.DeleteGroup)
+		protected.GET("/groups/available", groupHandler.GetAvailableGroups)
 		// Subject endpoints
 		protected.GET("/subjects/:id", subjectHandler.GetSubject)
 		protected.POST("/subjects", subjectHandler.CreateSubject)
@@ -118,7 +127,7 @@ func main() {
 		// Applications
 		protected.POST("/groups/applications", appHandler.CreateApplication)
 		protected.GET("/groups/applications/pending", appHandler.GetPendingApplications)
-		protected.PATCH("/groups/applications/:user_id/:group_id", appHandler.ReviewApplication)
+		protected.PATCH("/groups/applications/:group_id", appHandler.ReviewApplication)
 	}
 
 	router.Run(":8080")

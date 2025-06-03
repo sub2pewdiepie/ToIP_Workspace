@@ -5,9 +5,11 @@ import (
 	"space/models"
 	"space/models/dto"
 	"space/services"
+	"space/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 // GroupHandler handles group-related HTTP requests
@@ -99,6 +101,85 @@ func (h *GroupHandler) GetAllGroups(c *gin.Context) {
 			Pages:    (total + int64(pageSize) - 1) / int64(pageSize),
 		},
 	}
+	c.JSON(http.StatusOK, response)
+}
+
+// GetAvailableGroups godoc
+// @Summary Get groups available to apply to
+// @Description Get a paginated list of groups where the user is not a member, admin, or moderator
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Page size" default(10)
+// @Param Authorization header string true "Bearer JWT"
+// @Success 200 {object} dto.GetGroupsResponse
+// @Failure 400 {object} map[string]string "Invalid input"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/groups/available [get]
+func (h *GroupHandler) GetAvailableGroups(c *gin.Context) {
+	pageStr := c.DefaultQuery("page", "1")
+	pageSizeStr := c.DefaultQuery("page_size", "10")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		utils.Logger.WithFields(logrus.Fields{
+			"error": err,
+			"page":  pageStr,
+		}).Error("Invalid page number")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page number"})
+		return
+	}
+
+	pageSize, err := strconv.Atoi(pageSizeStr)
+	if err != nil || pageSize < 1 {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":     err,
+			"page_size": pageSizeStr,
+		}).Error("Invalid page size")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page size"})
+		return
+	}
+
+	username, exists := c.Get("username")
+	if !exists {
+		utils.Logger.Error("Unauthorized: username not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username":  username,
+		"page":      page,
+		"page_size": pageSize,
+	}).Debug("Fetching available groups")
+
+	groups, total, err := h.service.GetAvailableGroups(c, username.(string), page, pageSize)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+		}).Error("Failed to fetch available groups")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch available groups"})
+		return
+	}
+
+	response := dto.GetGroupsResponse{
+		Groups: groups,
+		Pagination: dto.PaginationMeta{
+			Page:     page,
+			PageSize: pageSize,
+			Total:    total,
+			Pages:    (total + int64(pageSize) - 1) / int64(pageSize),
+		},
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+		"total":    total,
+		"page":     page,
+	}).Info("Available groups fetched successfully")
 	c.JSON(http.StatusOK, response)
 }
 
@@ -292,11 +373,9 @@ func (h *SubjectHandler) UpdateSubject(c *gin.Context) {
 	if input.Name != "" {
 		subject.Name = input.Name
 	}
-	if input.Description != "" {
-		subject.Description = input.Description
-	}
-	if input.GroupID != 0 {
-		subject.GroupID = input.GroupID
+
+	if input.AcademicGroupID != 0 {
+		subject.AcademicGroupID = input.AcademicGroupID
 	}
 	if err := h.service.UpdateSubject(subject); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

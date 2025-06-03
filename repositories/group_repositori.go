@@ -2,7 +2,9 @@ package repositories
 
 import (
 	"space/models"
+	"space/utils"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -97,6 +99,7 @@ func (r *GroupRepository) GetGroupsManagedBy(userID int32) ([]models.Group, erro
 
 	return groups, err
 }
+
 func (r *GroupRepository) IsAdminOrModerator(groupID, userID int32) (bool, error) {
 	var count int64
 
@@ -120,4 +123,49 @@ func (r *GroupRepository) IsAdminOrModerator(groupID, userID int32) (bool, error
 	}
 
 	return count > 0, nil
+}
+
+// Where user can apply (not a member)
+func (r *GroupRepository) GetAvailable(userID int32, page, pageSize int) ([]models.Group, int64, error) {
+	var groups []models.Group
+	var total int64
+
+	offset := (page - 1) * pageSize
+
+	query := r.db.Model(&models.Group{}).
+		Preload("Admin").
+		Preload("AcademicGroup").
+		Where("id NOT IN (?)", r.db.Model(&models.Group{}).
+			Select("id").
+			Where("admin_id = ?", userID)).
+		Where("id NOT IN (?)", r.db.Model(&models.GroupUser{}).
+			Select("group_id").
+			Where("user_id = ?", userID)).
+		Where("id NOT IN (?)", r.db.Model(&models.GroupModer{}).
+			Select("group_id").
+			Where("user_id = ?", userID))
+
+	if err := query.Count(&total).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":   err,
+			"user_id": userID,
+		}).Error("Failed to count available groups")
+		return nil, 0, err
+	}
+
+	if err := query.Offset(offset).Limit(pageSize).Find(&groups).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":   err,
+			"user_id": userID,
+		}).Error("Failed to fetch available groups")
+		return nil, 0, err
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"user_id":   userID,
+		"total":     total,
+		"page":      page,
+		"page_size": pageSize,
+	}).Debug("Fetched available groups")
+	return groups, total, nil
 }

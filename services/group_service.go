@@ -5,17 +5,20 @@ import (
 	"space/models"
 	"space/models/dto"
 	"space/repositories"
+	"space/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type GroupService struct {
-	groupRepo *repositories.GroupRepository
-	userRepo  repositories.UserRepository // интерфейс!!!
+	groupRepo     *repositories.GroupRepository
+	userRepo      repositories.UserRepository // интерфейс!!!
+	groupuserRepo *repositories.GroupUserRepository
 }
 
-func NewGroupService(groupRepo *repositories.GroupRepository, userRepo repositories.UserRepository) *GroupService {
-	return &GroupService{groupRepo, userRepo}
+func NewGroupService(groupRepo *repositories.GroupRepository, userRepo repositories.UserRepository, groupuserRepo *repositories.GroupUserRepository) *GroupService {
+	return &GroupService{groupRepo, userRepo, groupuserRepo}
 }
 
 func (s *GroupService) GetGroupByID(id int32) (*models.Group, error) {
@@ -44,25 +47,58 @@ func (s *GroupService) GetAllGroups(page, pageSize int32) ([]dto.GroupDTO, int64
 
 func (s *GroupService) CreateGroup(c *gin.Context, group *models.Group) error {
 	if group.Name == "" || group.AcademicGroupID == 0 {
+		utils.Logger.WithFields(logrus.Fields{}).Error("name and academic_group_id are required")
 		return errors.New("name and academic_group_id are required")
 	}
 
 	// Get authenticated user's username from context
 	username, exists := c.Get("username")
 	if !exists {
+		utils.Logger.WithFields(logrus.Fields{
+			"username": username,
+			"exists":   exists,
+		}).Error("user not authenticated")
+
 		return errors.New("user not authenticated")
 	}
 
 	// Fetch user to get their ID
 	user, err := s.userRepo.GetByUsername(username.(string))
 	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"username": username,
+			"error":    err,
+		}).Error("failed to find user")
 		return errors.New("failed to find authenticated user")
 	}
 
 	// Set AdminID to the authenticated user's ID
 	group.AdminID = user.UserID
+	if err := s.groupRepo.Create(group); err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+			"name":     group.Name,
+		}).Error("failed to create new group")
+		return err
+	}
+	// Add admin to groupuser relationship
+	groupUser := &models.GroupUser{
+		GroupID: group.ID,
+		UserID:  user.UserID,
+		Role:    "admin",
+	}
+	if err := s.groupuserRepo.Create(groupUser); err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":      err,
+			"user":       username,
+			"group_name": group.Name,
+			"userID":     user.UserID,
+			"place":      "GroupService.CreateGroup",
+		}).Error("failed to assign to admin user groupuser relationship")
+	}
 
-	return s.groupRepo.Create(group)
+	return nil
 }
 
 func (s *GroupService) UpdateGroup(c *gin.Context, group *models.Group) error {
@@ -118,4 +154,43 @@ func (s *GroupService) GetApplicationsForManagedGroups(userID int32) ([]models.G
 	}
 
 	return applications, nil
+}
+
+func (s *GroupService) GetAvailableGroups(c *gin.Context, username string, page, pageSize int) ([]dto.GroupDTO, int64, error) {
+	user, err := s.userRepo.GetByUsername(username)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+		}).Error("Failed to find user")
+		return nil, 0, errors.New("failed to find user")
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username":  username,
+		"user_id":   user.UserID,
+		"page":      page,
+		"page_size": pageSize,
+	}).Debug("Querying available groups")
+
+	groups, total, err := s.groupRepo.GetAvailable(user.UserID, page, pageSize)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":   err,
+			"user_id": user.UserID,
+		}).Error("Failed to query available groups")
+		return nil, 0, err
+	}
+
+	groupDTOs := make([]dto.GroupDTO, len(groups))
+	for i, group := range groups {
+		groupDTOs[i] = dto.ToGroupDTO(&group)
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+		"user_id":  user.UserID,
+		"total":    total,
+	}).Debug("Available groups retrieved")
+	return groupDTOs, total, nil
 }
