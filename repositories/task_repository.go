@@ -16,9 +16,13 @@ func NewTaskRepository(db *gorm.DB) *TaskRepository {
 	return &TaskRepository{db}
 }
 
-func (r *TaskRepository) GetByID(id int32) (*models.Task, error) {
+func (r *TaskRepository) GetByID(taskID int32) (*models.Task, error) {
 	var task models.Task
-	if err := r.db.Preload("Subject").Preload("User").First(&task, "task_id = ?", id).Error; err != nil {
+	if err := r.db.Preload("User").Preload("Subject").First(&task, taskID).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":   err,
+			"task_id": taskID,
+		}).Error("Failed to find task by ID")
 		return nil, err
 	}
 	return &task, nil
@@ -39,9 +43,21 @@ func (r *TaskRepository) Update(task *models.Task) error {
 	return r.db.Save(task).Error
 }
 
-func (r *TaskRepository) FindByGroupID(groupID int32) ([]*models.Task, error) {
+func (r *TaskRepository) OldFindByGroupID(groupID int32) ([]*models.Task, error) {
 	var tasks []*models.Task
 	if err := r.db.Preload("User").Where("group_id = ?", groupID).Find(&tasks).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupID,
+		}).Error("Failed to find tasks by group ID")
+		return nil, err
+	}
+	return tasks, nil
+}
+
+func (r *TaskRepository) FindByGroupID(groupID int32) ([]*models.Task, error) {
+	var tasks []*models.Task
+	if err := r.db.Preload("User").Preload("Subject").Where("group_id = ?", groupID).Find(&tasks).Error; err != nil {
 		utils.Logger.WithFields(logrus.Fields{
 			"error":    err,
 			"group_id": groupID,
@@ -63,7 +79,7 @@ func (r *TaskRepository) UpdateVerificationStatus(taskID int32, isVerified bool)
 	return nil
 }
 
-func (r *TaskRepository) FindByGroupIDs(groupIDs []int32) ([]*models.Task, error) {
+func (r *TaskRepository) OldFindByGroupIDs(groupIDs []int32) ([]*models.Task, error) {
 	var tasks []*models.Task
 	if err := r.db.Preload("User").Where("group_id IN ?", groupIDs).Find(&tasks).Error; err != nil {
 		utils.Logger.WithFields(logrus.Fields{
@@ -73,4 +89,27 @@ func (r *TaskRepository) FindByGroupIDs(groupIDs []int32) ([]*models.Task, error
 		return nil, err
 	}
 	return tasks, nil
+}
+
+func (r *TaskRepository) FindByGroupIDs(groupIDs []int32) ([]*models.Task, error) {
+	var tasks []*models.Task
+	if err := r.db.Preload("User").Preload("Subject").Where("group_id IN ?", groupIDs).Find(&tasks).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":     err,
+			"group_ids": groupIDs,
+		}).Error("Failed to find tasks by group IDs")
+		return nil, err
+	}
+	return tasks, nil
+}
+
+func (r *TaskRepository) Delete(taskID int32) error {
+	if err := r.db.Delete(&models.Task{}, taskID).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":   err,
+			"task_id": taskID,
+		}).Error("Failed to delete task")
+		return err
+	}
+	return nil
 }
