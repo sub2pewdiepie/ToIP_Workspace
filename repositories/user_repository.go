@@ -2,7 +2,9 @@ package repositories
 
 import (
 	"space/models"
+	"space/utils"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -36,6 +38,16 @@ func (r *userRepo) Create(user *models.User) error {
 func (r *userRepo) GetByUsername(username string) (*models.User, error) {
 	var user models.User
 	if err := r.db.Where("username = ?", username).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			utils.Logger.WithFields(logrus.Fields{
+				"username": username,
+			}).Debug("User not found")
+			return nil, err
+		}
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+		}).Error("Failed to find user by username")
 		return nil, err
 	}
 	return &user, nil

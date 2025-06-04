@@ -2,7 +2,9 @@ package repositories
 
 import (
 	"space/models"
+	"space/utils"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -28,4 +30,32 @@ func (r *GroupModerRepository) Create(groupModer *models.GroupModer) error {
 
 func (r *GroupModerRepository) Delete(groupID, userID int32) error {
 	return r.db.Delete(&models.GroupModer{}, "group_id = ? AND user_id = ?", groupID, userID).Error
+}
+
+func (r *GroupModerRepository) FindByGroupID(groupID int32) ([]*models.GroupModer, error) {
+	var groupModers []*models.GroupModer
+	if err := r.db.Preload("User").Where("group_id = ?", groupID).Find(&groupModers).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupID,
+		}).Error("Failed to find group moderators")
+		return nil, err
+	}
+	return groupModers, nil
+}
+
+func (r *GroupModerRepository) IsModerator(groupID, userID int32) (bool, error) {
+	var groupModer models.GroupModer
+	if err := r.db.Where("group_id = ? AND user_id = ?", groupID, userID).First(&groupModer).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return false, nil
+		}
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupID,
+			"user_id":  userID,
+		}).Error("Failed to check moderator status")
+		return false, err
+	}
+	return true, nil
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"space/auth"
 	"space/database"
@@ -53,22 +52,25 @@ func main() {
 
 	groupuserRepo := repositories.NewGroupUserRepository(database.DB)
 	// groupuserService := services.NewGroupUserService(groupuserRepo)
-
-	groupRepo := repositories.NewGroupRepository(database.DB)
-	groupService := services.NewGroupService(groupRepo, userRepo, groupuserRepo)
-	groupHandler := routes.NewGroupHandler(groupService)
-	subjectRepo := repositories.NewSubjectRepository(database.DB)
-	subjectService := services.NewSubjectService(subjectRepo)
-	subjectHandler := routes.NewSubjectHandler(subjectService)
-	groupUserRepo := repositories.NewGroupUserRepository(database.DB)
-	groupUserService := services.NewGroupUserService(groupUserRepo)
-	groupUserHandler := routes.NewGroupUserHandler(groupUserService)
-	academicGroupRepo := repositories.NewAcademicGroupRepository(database.DB)
-	academicGroupService := services.NewAcademicGroupService(academicGroupRepo)
-	academicGroupHandler := routes.NewAcademicGroupHandler(academicGroupService)
 	groupModerRepo := repositories.NewGroupModerRepository(database.DB)
 	groupModerService := services.NewGroupModerService(groupModerRepo)
 	groupModerHandler := routes.NewGroupModerHandler(groupModerService)
+
+	groupRepo := repositories.NewGroupRepository(database.DB)
+	groupService := services.NewGroupService(groupRepo, userRepo, groupuserRepo, groupModerRepo)
+	groupHandler := routes.NewGroupHandler(groupService)
+
+	subjectRepo := repositories.NewSubjectRepository(database.DB)
+	subjectService := services.NewSubjectService(subjectRepo)
+	subjectHandler := routes.NewSubjectHandler(subjectService)
+
+	groupUserRepo := repositories.NewGroupUserRepository(database.DB)
+	groupUserService := services.NewGroupUserService(groupUserRepo)
+	groupUserHandler := routes.NewGroupUserHandler(groupUserService)
+
+	academicGroupRepo := repositories.NewAcademicGroupRepository(database.DB)
+	academicGroupService := services.NewAcademicGroupService(academicGroupRepo)
+	academicGroupHandler := routes.NewAcademicGroupHandler(academicGroupService)
 
 	appRepo := repositories.NewGroupApplicationRepository(database.DB)
 	appService := services.NewGroupApplicationService(appRepo, groupRepo, groupModerRepo, userRepo, groupUserRepo)
@@ -76,12 +78,12 @@ func main() {
 
 	// Seed database
 
-	if err := database.SeedAcademicGroups(database.DB, academicGroupRepo); err != nil {
-		log.Fatalf("failed to seed academic groups: %v", err)
-	}
-	if err := database.SeedSubjects(database.DB, subjectRepo, academicGroupRepo); err != nil {
-		log.Fatalf("failed to seed academic groups: %v", err)
-	}
+	// if err := database.SeedAcademicGroups(database.DB, academicGroupRepo); err != nil {
+	// 	log.Fatalf("failed to seed academic groups: %v", err)
+	// }
+	// if err := database.SeedSubjects(database.DB, subjectRepo, academicGroupRepo); err != nil {
+	// 	log.Fatalf("failed to seed academic groups: %v", err)
+	// }
 
 	// Public routes
 	router.POST("/login", routes.LoginHandler(authService))
@@ -105,6 +107,7 @@ func main() {
 		protected.PATCH("/groups/:id", groupHandler.UpdateGroup)
 		protected.DELETE("/groups/:id", groupHandler.DeleteGroup)
 		protected.GET("/groups/available", groupHandler.GetAvailableGroups)
+		protected.GET("/groups/:id/users", groupHandler.GetGroupUsers)
 		// Subject endpoints
 		protected.GET("/subjects/:id", subjectHandler.GetSubject)
 		protected.POST("/subjects", subjectHandler.CreateSubject)

@@ -160,9 +160,17 @@ type Group struct {
 }
 
 // GroupModer
-type GroupModer struct {
+type OldGroupModer struct {
 	GroupID int32 `gorm:"primaryKey;foreignKey:GroupID;references:GroupID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	UserID  int32 `gorm:"primaryKey;foreignKey:UserID;references:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+}
+
+type GroupModer struct {
+	GroupID   int32 `gorm:"primaryKey;foreignKey:GroupID"`
+	UserID    int32 `gorm:"primaryKey;foreignKey:UserID"`
+	Group     Group `gorm:"foreignKey:GroupID"`
+	User      User  `gorm:"foreignKey:UserID"`
+	CreatedAt time.Time
 }
 
 // Users
