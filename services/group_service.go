@@ -129,8 +129,50 @@ func (s *GroupService) UpdateGroup(c *gin.Context, group *models.Group) error {
 	return s.groupRepo.Update(group)
 }
 
-func (s *GroupService) DeleteGroup(id int32) error {
-	return s.groupRepo.Delete(id)
+func (s *GroupService) DeleteGroup(id int32, username string) error {
+	// Get user_id from username
+	user, err := s.userRepo.GetByUsername(username)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+		}).Error("User not found")
+		return errors.New("user not found")
+	}
+
+	// Get group to check admin_id
+	group, err := s.groupRepo.GetByID(id)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": id,
+		}).Error("Group not found")
+		return errors.New("group not found")
+	}
+
+	// Check if user is admin
+	if group.AdminID != user.UserID {
+		utils.Logger.WithFields(logrus.Fields{
+			"username": username,
+			"group_id": id,
+		}).Warn("User is not group admin")
+		return errors.New("only group admin can delete the group")
+	}
+
+	// Delete the group
+	if err := s.groupRepo.Delete(id); err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": id,
+		}).Error("Failed to delete group")
+		return err
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+		"group_id": id,
+	}).Info("Group deleted successfully")
+	return nil
 }
 
 func (s *GroupService) GetApplicationsForManagedGroups(userID int32) ([]models.GroupApplication, error) {
