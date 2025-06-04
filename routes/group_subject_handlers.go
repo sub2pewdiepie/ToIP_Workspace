@@ -410,3 +410,144 @@ func (h *SubjectHandler) DeleteSubject(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Subject deleted"})
 }
+
+// GetGroupModerators godoc
+// @Summary Get group moderators and admin
+// @Description Get the admin and moderators of the specified group
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Param id path int true "Group ID"
+// @Param Authorization header string true "Bearer JWT"
+// @Success 200 {object} dto.ModeratorsResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/groups/{id}/moderators [get]
+func (h *GroupHandler) GetGroupModerators(c *gin.Context) {
+	groupIDStr := c.Param("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupIDStr,
+		}).Error("Invalid group ID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid group ID"})
+		return
+	}
+
+	username, exists := c.Get("username")
+	if !exists {
+		utils.Logger.Error("Unauthorized: username not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	isAuthorized, err := h.service.IsAdminOrModerator(int32(groupID), username.(string))
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+			"group_id": groupID,
+		}).Error("Failed to check authorization")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check authorization"})
+		return
+	}
+	if !isAuthorized {
+		utils.Logger.WithFields(logrus.Fields{
+			"username": username,
+			"group_id": groupID,
+		}).Warn("Forbidden: user is not admin or moderator")
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden: admin or moderator role required"})
+		return
+	}
+
+	response, err := h.service.GetGroupModeratorsAndAdmin(int32(groupID))
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupID,
+		}).Error("Failed to fetch moderators and admin")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch moderators and admin"})
+		return
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username":        username,
+		"group_id":        groupID,
+		"admin_id":        response.Admin.UserID,
+		"moderator_count": len(response.Moderators),
+	}).Info("Successfully fetched moderators and admin")
+	c.JSON(http.StatusOK, response)
+}
+
+// GetGroupUsers godoc
+// @Summary Get users in a group
+// @Description Get a list of users who are members of the specified group
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Param id path int true "Group ID"
+// @Param Authorization header string true "Bearer JWT"
+// @Success 200 {array} dto.UserDTO
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/groups/{id}/users [get]
+func (h *GroupHandler) GetGroupUsers(c *gin.Context) {
+	groupIDStr := c.Param("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupIDStr,
+		}).Error("Invalid group ID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid group ID"})
+		return
+	}
+
+	username, exists := c.Get("username")
+	if !exists {
+		utils.Logger.Error("Unauthorized: username not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	isMember, err := h.service.IsGroupMember(int32(groupID), username.(string))
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+			"group_id": groupID,
+		}).Error("Failed to check group membership")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check group membership"})
+		return
+	}
+	if !isMember {
+		utils.Logger.WithFields(logrus.Fields{
+			"username": username,
+			"group_id": groupID,
+		}).Warn("Forbidden: user is not a group member")
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied: group membership required"})
+		return
+	}
+
+	users, err := h.service.GetGroupUsers(int32(groupID))
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupID,
+		}).Error("Failed to fetch group users")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch group users"})
+		return
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+		"group_id": groupID,
+		"count":    len(users),
+	}).Info("Successfully fetched group users")
+	c.JSON(http.StatusOK, users)
+}

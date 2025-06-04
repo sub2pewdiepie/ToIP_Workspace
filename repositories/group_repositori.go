@@ -16,7 +16,7 @@ func NewGroupRepository(db *gorm.DB) *GroupRepository {
 	return &GroupRepository{db}
 }
 
-func (r *GroupRepository) GetByID(id int32) (*models.Group, error) {
+func (r *GroupRepository) OldGetByID(id int32) (*models.Group, error) {
 	var group models.Group
 	if err := r.db.Preload("AcademicGroup").Preload("Admin").First(&group, "id = ?", id).Error; err != nil {
 		return nil, err
@@ -168,4 +168,16 @@ func (r *GroupRepository) GetAvailable(userID int32, page, pageSize int) ([]mode
 		"page_size": pageSize,
 	}).Debug("Fetched available groups")
 	return groups, total, nil
+}
+
+func (r *GroupRepository) GetByID(id int32) (*models.Group, error) {
+	var group models.Group
+	if err := r.db.Preload("Admin").Preload("AcademicGroup").First(&group, id).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error": err,
+			"id":    id,
+		}).Error("Failed to find group")
+		return nil, err
+	}
+	return &group, nil
 }

@@ -9,6 +9,18 @@ definitions:
     required:
     - group_id
     type: object
+  dto.CreateTaskRequest:
+    properties:
+      description:
+        type: string
+      group_id:
+        type: integer
+      title:
+        type: string
+    required:
+    - group_id
+    - title
+    type: object
   dto.GetGroupsResponse:
     properties:
       groups:
@@ -48,6 +60,15 @@ definitions:
       name:
         type: string
     type: object
+  dto.ModeratorsResponse:
+    properties:
+      admin:
+        $ref: '#/definitions/dto.UserDTO'
+      moderators:
+        items:
+          $ref: '#/definitions/dto.UserDTO'
+        type: array
+    type: object
   dto.PaginationMeta:
     properties:
       page:
@@ -62,6 +83,41 @@ definitions:
       total:
         example: 25
         type: integer
+    type: object
+  dto.TaskDTO:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      group_id:
+        type: integer
+      id:
+        type: integer
+      is_verified:
+        type: boolean
+      title:
+        type: string
+      user_id:
+        type: integer
+      username:
+        type: string
+    type: object
+  dto.UserDTO:
+    properties:
+      created_at:
+        type: string
+      user_id:
+        type: integer
+      username:
+        type: string
+    type: object
+  dto.VerificationRequest:
+    properties:
+      is_verified:
+        type: boolean
+    required:
+    - is_verified
     type: object
   models.AcademicGroup:
     properties:
@@ -93,8 +149,14 @@ definitions:
     type: object
   models.GroupModer:
     properties:
+      createdAt:
+        type: string
+      group:
+        $ref: '#/definitions/models.Group'
       groupID:
         type: integer
+      user:
+        $ref: '#/definitions/models.User'
       userID:
         type: integer
     type: object
@@ -912,6 +974,108 @@ paths:
       summary: Update a group
       tags:
       - groups
+  /api/groups/{id}/moderators:
+    get:
+      consumes:
+      - application/json
+      description: Get the admin and moderators of the specified group
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ModeratorsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get group moderators and admin
+      tags:
+      - groups
+  /api/groups/{id}/users:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of users who are members of the specified group
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.UserDTO'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get users in a group
+      tags:
+      - groups
   /api/groups/applications:
     post:
       consumes:
@@ -1274,6 +1438,242 @@ paths:
       summary: Update a subject
       tags:
       - subjects
+  /api/tasks:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of tasks for the specified group
+      parameters:
+      - description: Group ID
+        in: query
+        name: group_id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.TaskDTO'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get tasks in a group
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Create a new task in the specified group
+      parameters:
+      - description: Task data
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateTaskRequest'
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new task
+      tags:
+      - tasks
+  /api/tasks/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get details of a task by ID, if user is a member of the task's
+        group
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TaskDTO'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a specific task
+      tags:
+      - tasks
+  /api/tasks/{id}/verify:
+    patch:
+      consumes:
+      - application/json
+      description: Verify or deny a task's legitimacy
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Verification Status
+        in: body
+        name: verify
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VerificationRequest'
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verify a task
+      tags:
+      - tasks
+  /api/tasks/my-groups:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of tasks from all groups the user is a member of
+      parameters:
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.TaskDTO'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get tasks from all user's groups
+      tags:
+      - tasks
   /login:
     post:
       consumes:

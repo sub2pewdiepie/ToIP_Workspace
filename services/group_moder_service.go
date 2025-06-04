@@ -3,7 +3,11 @@ package services
 import (
 	"errors"
 	"space/models"
+	"space/models/dto"
 	"space/repositories"
+	"space/utils"
+
+	"github.com/sirupsen/logrus"
 )
 
 type GroupModerService struct {
@@ -32,4 +36,20 @@ func (s *GroupModerService) CreateGroupModer(groupModer *models.GroupModer) erro
 
 func (s *GroupModerService) DeleteGroupModer(groupID, userID int32) error {
 	return s.groupModerRepo.Delete(groupID, userID)
+}
+
+func (s *GroupModerService) GetModeratorsByGroupID(groupID int32) ([]dto.UserDTO, error) {
+	groupModers, err := s.groupModerRepo.FindByGroupID(groupID)
+	if err != nil {
+		return nil, err
+	}
+	var moderators []dto.UserDTO
+	for _, gm := range groupModers {
+		moderators = append(moderators, dto.ToUserDTO(&gm.User))
+	}
+	utils.Logger.WithFields(logrus.Fields{
+		"group_id": groupID,
+		"count":    len(moderators),
+	}).Debug("Fetched group moderators")
+	return moderators, nil
 }

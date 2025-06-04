@@ -12,13 +12,14 @@ import (
 )
 
 type GroupService struct {
-	groupRepo     *repositories.GroupRepository
-	userRepo      repositories.UserRepository // интерфейс!!!
-	groupuserRepo *repositories.GroupUserRepository
+	groupRepo      *repositories.GroupRepository
+	userRepo       repositories.UserRepository // интерфейс!!!
+	groupuserRepo  *repositories.GroupUserRepository
+	groupModerRepo *repositories.GroupModerRepository
 }
 
-func NewGroupService(groupRepo *repositories.GroupRepository, userRepo repositories.UserRepository, groupuserRepo *repositories.GroupUserRepository) *GroupService {
-	return &GroupService{groupRepo, userRepo, groupuserRepo}
+func NewGroupService(groupRepo *repositories.GroupRepository, userRepo repositories.UserRepository, groupuserRepo *repositories.GroupUserRepository, groupModerRepo *repositories.GroupModerRepository) *GroupService {
+	return &GroupService{groupRepo, userRepo, groupuserRepo, groupModerRepo}
 }
 
 func (s *GroupService) GetGroupByID(id int32) (*models.Group, error) {
@@ -193,4 +194,84 @@ func (s *GroupService) GetAvailableGroups(c *gin.Context, username string, page,
 		"total":    total,
 	}).Debug("Available groups retrieved")
 	return groupDTOs, total, nil
+}
+
+func (s *GroupService) IsAdminOrModerator(groupID int32, username string) (bool, error) {
+	group, err := s.groupRepo.GetByID(groupID)
+	if err != nil {
+		return false, err
+	}
+	user, err := s.userRepo.GetByUsername(username)
+	if err != nil {
+		return false, err
+	}
+	if group.AdminID == user.UserID {
+		return true, nil
+	}
+	isModerator, err := s.groupModerRepo.IsModerator(groupID, user.UserID)
+	if err != nil {
+		return false, err
+	}
+	return isModerator, nil
+}
+
+func (s *GroupService) GetGroupModeratorsAndAdmin(groupID int32) (dto.ModeratorsResponse, error) {
+	group, err := s.groupRepo.GetByID(groupID)
+	if err != nil {
+		return dto.ModeratorsResponse{}, err
+	}
+	moders, err := s.groupModerRepo.FindByGroupID(groupID)
+	if err != nil {
+		return dto.ModeratorsResponse{}, err
+	}
+	var moderatorDTOs []dto.UserDTO
+	for _, moder := range moders {
+		moderatorDTOs = append(moderatorDTOs, dto.ToUserDTO(&moder.User))
+	}
+	response := dto.ModeratorsResponse{
+		Admin:      dto.ToUserDTO(&group.Admin),
+		Moderators: moderatorDTOs,
+	}
+	utils.Logger.WithFields(logrus.Fields{
+		"group_id":        groupID,
+		"admin_id":        group.AdminID,
+		"moderator_count": len(moderatorDTOs),
+	}).Debug("Fetched group moderators and admin")
+	return response, nil
+}
+
+func (s *GroupService) GetUserByUsername(username string) (*models.User, error) {
+	user, err := s.userRepo.GetByUsername(username)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+		}).Error("Failed to fetch user by username")
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *GroupService) GetUserGroupIDs(username string) ([]int32, error) {
+	user, err := s.userRepo.GetByUsername(username)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+		}).Error("Failed to fetch user by username")
+		return nil, err
+	}
+	groupUsers, err := s.groupuserRepo.FindByUserID(user.UserID)
+	if err != nil {
+		return nil, err
+	}
+	var groupIDs []int32
+	for _, gu := range groupUsers {
+		groupIDs = append(groupIDs, gu.GroupID)
+	}
+	utils.Logger.WithFields(logrus.Fields{
+		"username":    username,
+		"group_count": len(groupIDs),
+	}).Debug("Fetched user's group IDs")
+	return groupIDs, nil
 }

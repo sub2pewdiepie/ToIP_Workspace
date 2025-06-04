@@ -47,28 +47,32 @@ func main() {
 	// Initialize dependencies
 	userRepo := repositories.NewUserRepository(database.DB)
 	authService := services.NewAuthService(userRepo)
-	taskRepo := repositories.NewTaskRepository(database.DB)
-	taskService := services.NewTaskService(taskRepo)
-	taskHandler := routes.NewTaskHandler(taskService)
 
 	groupuserRepo := repositories.NewGroupUserRepository(database.DB)
 	// groupuserService := services.NewGroupUserService(groupuserRepo)
-
-	groupRepo := repositories.NewGroupRepository(database.DB)
-	groupService := services.NewGroupService(groupRepo, userRepo, groupuserRepo)
-	groupHandler := routes.NewGroupHandler(groupService)
-	subjectRepo := repositories.NewSubjectRepository(database.DB)
-	subjectService := services.NewSubjectService(subjectRepo)
-	subjectHandler := routes.NewSubjectHandler(subjectService)
-	groupUserRepo := repositories.NewGroupUserRepository(database.DB)
-	groupUserService := services.NewGroupUserService(groupUserRepo)
-	groupUserHandler := routes.NewGroupUserHandler(groupUserService)
-	academicGroupRepo := repositories.NewAcademicGroupRepository(database.DB)
-	academicGroupService := services.NewAcademicGroupService(academicGroupRepo)
-	academicGroupHandler := routes.NewAcademicGroupHandler(academicGroupService)
 	groupModerRepo := repositories.NewGroupModerRepository(database.DB)
 	groupModerService := services.NewGroupModerService(groupModerRepo)
 	groupModerHandler := routes.NewGroupModerHandler(groupModerService)
+
+	groupRepo := repositories.NewGroupRepository(database.DB)
+	groupService := services.NewGroupService(groupRepo, userRepo, groupuserRepo, groupModerRepo)
+	groupHandler := routes.NewGroupHandler(groupService)
+
+	taskRepo := repositories.NewTaskRepository(database.DB)
+	taskService := services.NewTaskService(taskRepo)
+	taskHandler := routes.NewTaskHandler(taskService, groupService)
+
+	subjectRepo := repositories.NewSubjectRepository(database.DB)
+	subjectService := services.NewSubjectService(subjectRepo)
+	subjectHandler := routes.NewSubjectHandler(subjectService)
+
+	groupUserRepo := repositories.NewGroupUserRepository(database.DB)
+	groupUserService := services.NewGroupUserService(groupUserRepo)
+	groupUserHandler := routes.NewGroupUserHandler(groupUserService)
+
+	academicGroupRepo := repositories.NewAcademicGroupRepository(database.DB)
+	academicGroupService := services.NewAcademicGroupService(academicGroupRepo)
+	academicGroupHandler := routes.NewAcademicGroupHandler(academicGroupService)
 
 	appRepo := repositories.NewGroupApplicationRepository(database.DB)
 	appService := services.NewGroupApplicationService(appRepo, groupRepo, groupModerRepo, userRepo, groupUserRepo)
@@ -96,15 +100,19 @@ func main() {
 	protected.Use(auth.AuthMiddleware())
 	{
 		// Task endpoints
+		protected.GET("/tasks", taskHandler.GetGroupTasks)
+		protected.GET("/tasks/my-groups", taskHandler.GetMyGroupTasks)
 		protected.GET("/tasks/:id", taskHandler.GetTask)
 		protected.POST("/tasks", taskHandler.CreateTask)
-		protected.PATCH("/tasks/:id", taskHandler.UpdateTask)
+		// protected.PATCH("/tasks/:id", taskHandler.UpdateTask)
+		protected.PATCH("/tasks/:id/verify", taskHandler.VerifyTask)
 		// Group endpoints
 		protected.GET("/groups/:id", groupHandler.GetGroup)
 		protected.POST("/groups", groupHandler.CreateGroup)
 		protected.PATCH("/groups/:id", groupHandler.UpdateGroup)
 		protected.DELETE("/groups/:id", groupHandler.DeleteGroup)
 		protected.GET("/groups/available", groupHandler.GetAvailableGroups)
+		protected.GET("/groups/:id/users", groupHandler.GetGroupUsers)
 		// Subject endpoints
 		protected.GET("/subjects/:id", subjectHandler.GetSubject)
 		protected.POST("/subjects", subjectHandler.CreateSubject)
