@@ -225,20 +225,32 @@ type OldSubject struct {
 //			// Creator   User      `gorm:"foreignKey:CreatedBy"`
 //			Creator User
 //	}
-type Task struct {
-	TaskID    int32 `gorm:"column:task_id;primaryKey;autoIncrement"`
-	SubjectID int32 `gorm:"foreignKey:SubjectID;references:SubjectID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
-
+type OldTask struct {
+	TaskID      int32     `gorm:"column:task_id;primaryKey;autoIncrement"`
+	SubjectID   int32     `gorm:"foreignKey:SubjectID;references:SubjectID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	Title       string    `gorm:"column:title;type:varchar(255);not null"`
 	Description string    `gorm:"column:description;type:text"`
+	IsVerified  bool      `gorm:"default:false" json:"is_verified"`
 	CreatedBy   int       `gorm:"column:created_by"`
 	IsActive    bool      `gorm:"column:is_active;default:true"`
 	CreatedAt   time.Time `gorm:"column:created_at;default:CURRENT_TIMESTAMP"`
 	UpdatedAt   time.Time `gorm:"column:updated_at;default:CURRENT_TIMESTAMP"`
 	// Subject     Subject   `gorm:"foreignKey:SubjectID"`
-	Subject Subject
+	Subject Subject `json:"-"`
 
-	User User `gorm:"foreignKey:CreatedBy;references:user_id"`
+	User User `gorm:"foreignKey:CreatedBy;references:user_id" json:"-"`
+}
+type Task struct {
+	ID          int32     `gorm:"primaryKey;autoIncrement" json:"id"`
+	GroupID     int32     `gorm:"not null" json:"group_id"`
+	UserID      int32     `gorm:"not null" json:"user_id"`
+	Title       string    `gorm:"not null" json:"title"`
+	Description string    `gorm:"type:text" json:"description"`
+	IsVerified  bool      `gorm:"default:false" json:"is_verified"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	User        User      `json:"-"`
+	Group       Group     `json:"-"`
 }
 
 // Materials

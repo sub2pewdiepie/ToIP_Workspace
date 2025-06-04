@@ -70,3 +70,15 @@ func (r *GroupUserRepository) IsMember(groupID, userID int32) (bool, error) {
 	}
 	return true, nil
 }
+
+func (r *GroupUserRepository) FindByUserID(userID int32) ([]*models.GroupUser, error) {
+	var groupUsers []*models.GroupUser
+	if err := r.db.Where("user_id = ?", userID).Find(&groupUsers).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":   err,
+			"user_id": userID,
+		}).Error("Failed to find groups for user")
+		return nil, err
+	}
+	return groupUsers, nil
+}

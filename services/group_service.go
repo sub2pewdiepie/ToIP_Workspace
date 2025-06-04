@@ -239,3 +239,39 @@ func (s *GroupService) GetGroupModeratorsAndAdmin(groupID int32) (dto.Moderators
 	}).Debug("Fetched group moderators and admin")
 	return response, nil
 }
+
+func (s *GroupService) GetUserByUsername(username string) (*models.User, error) {
+	user, err := s.userRepo.GetByUsername(username)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+		}).Error("Failed to fetch user by username")
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *GroupService) GetUserGroupIDs(username string) ([]int32, error) {
+	user, err := s.userRepo.GetByUsername(username)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+		}).Error("Failed to fetch user by username")
+		return nil, err
+	}
+	groupUsers, err := s.groupuserRepo.FindByUserID(user.UserID)
+	if err != nil {
+		return nil, err
+	}
+	var groupIDs []int32
+	for _, gu := range groupUsers {
+		groupIDs = append(groupIDs, gu.GroupID)
+	}
+	utils.Logger.WithFields(logrus.Fields{
+		"username":    username,
+		"group_count": len(groupIDs),
+	}).Debug("Fetched user's group IDs")
+	return groupIDs, nil
+}

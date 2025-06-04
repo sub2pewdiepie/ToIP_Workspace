@@ -46,9 +46,6 @@ func main() {
 	// Initialize dependencies
 	userRepo := repositories.NewUserRepository(database.DB)
 	authService := services.NewAuthService(userRepo)
-	taskRepo := repositories.NewTaskRepository(database.DB)
-	taskService := services.NewTaskService(taskRepo)
-	taskHandler := routes.NewTaskHandler(taskService)
 
 	groupuserRepo := repositories.NewGroupUserRepository(database.DB)
 	// groupuserService := services.NewGroupUserService(groupuserRepo)
@@ -59,6 +56,10 @@ func main() {
 	groupRepo := repositories.NewGroupRepository(database.DB)
 	groupService := services.NewGroupService(groupRepo, userRepo, groupuserRepo, groupModerRepo)
 	groupHandler := routes.NewGroupHandler(groupService)
+
+	taskRepo := repositories.NewTaskRepository(database.DB)
+	taskService := services.NewTaskService(taskRepo)
+	taskHandler := routes.NewTaskHandler(taskService, groupService)
 
 	subjectRepo := repositories.NewSubjectRepository(database.DB)
 	subjectService := services.NewSubjectService(subjectRepo)
@@ -98,9 +99,12 @@ func main() {
 	protected.Use(auth.AuthMiddleware())
 	{
 		// Task endpoints
+		protected.GET("/tasks", taskHandler.GetGroupTasks)
+		protected.GET("/tasks/my-groups", taskHandler.GetMyGroupTasks)
 		protected.GET("/tasks/:id", taskHandler.GetTask)
 		protected.POST("/tasks", taskHandler.CreateTask)
-		protected.PATCH("/tasks/:id", taskHandler.UpdateTask)
+		// protected.PATCH("/tasks/:id", taskHandler.UpdateTask)
+		protected.PATCH("/tasks/:id/verify", taskHandler.VerifyTask)
 		// Group endpoints
 		protected.GET("/groups/:id", groupHandler.GetGroup)
 		protected.POST("/groups", groupHandler.CreateGroup)
