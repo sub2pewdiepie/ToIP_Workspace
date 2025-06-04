@@ -129,6 +129,7 @@ func main() {
 		protected.POST("/academic-groups", academicGroupHandler.CreateAcademicGroup)
 		protected.PATCH("/academic-groups/:id", academicGroupHandler.UpdateAcademicGroup)
 		protected.DELETE("/academic-groups/:id", academicGroupHandler.DeleteAcademicGroup)
+		protected.GET("/academic-groups", academicGroupHandler.GetAllAcademicGroups)
 		// GroupModer endpoints
 		protected.GET("/group-moders/:group_id/:user_id", groupModerHandler.GetGroupModer)
 		protected.POST("/group-moders", groupModerHandler.CreateGroupModer)

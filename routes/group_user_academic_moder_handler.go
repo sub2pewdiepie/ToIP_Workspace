@@ -4,9 +4,11 @@ import (
 	"net/http"
 	"space/models"
 	"space/services"
+	"space/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 // GroupUserHandler handles group-user-related HTTP requests
@@ -378,4 +380,40 @@ func (h *GroupModerHandler) DeleteGroupModer(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Group-moderator deleted"})
+}
+
+// GetAllAcademicGroups godoc
+// @Summary Get all academic groups
+// @Description Retrieve a list of all academic groups
+// @Tags academic-groups
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer JWT"
+// @Success 200 {array} dto.AcademicGroupDTO
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/academic-groups [get]
+func (h *AcademicGroupHandler) GetAllAcademicGroups(c *gin.Context) {
+	username, exists := c.Get("username")
+	if !exists {
+		utils.Logger.Error("Unauthorized: username not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	groups, err := h.service.GetAllAcademicGroups()
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+		}).Error("Failed to fetch academic groups")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch academic groups"})
+		return
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+		"count":    len(groups),
+	}).Info("Successfully fetched all academic groups")
+	c.JSON(http.StatusOK, groups)
 }

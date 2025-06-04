@@ -3,7 +3,11 @@ package services
 import (
 	"errors"
 	"space/models"
+	"space/models/dto"
 	"space/repositories"
+	"space/utils"
+
+	"github.com/sirupsen/logrus"
 )
 
 type AcademicGroupService struct {
@@ -34,4 +38,16 @@ func (s *AcademicGroupService) UpdateAcademicGroup(academicGroup *models.Academi
 
 func (s *AcademicGroupService) DeleteAcademicGroup(id int32) error {
 	return s.academicGroupRepo.Delete(id)
+}
+
+func (s *AcademicGroupService) GetAllAcademicGroups() ([]dto.AcademicGroupDTO, error) {
+	groups, err := s.academicGroupRepo.FindAll()
+	if err != nil {
+		return nil, err
+	}
+	dtos := dto.ToAcademicGroupDTOs(groups)
+	utils.Logger.WithFields(logrus.Fields{
+		"count": len(dtos),
+	}).Debug("Fetched all academic groups")
+	return dtos, nil
 }
