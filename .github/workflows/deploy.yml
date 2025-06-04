@@ -1,8 +1,9 @@
 name: Deploy to VPS
 
-on: push
-  # branches:
-  #   - dev
+on: 
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -23,8 +24,16 @@ jobs:
 
             # Clone the private repository using SSH
             cd sussy_project
-            rm -rf ToIP_Workspace
-            git clone -b main git@github.com:${{ github.repository }}.git ToIP_Workspace
+            if [ ! -d "ToIP_Workspace" ]; then
+              echo "Cloning repository..."
+              git clone -b main git@github.com:${{ github.repository }}.git ToIP_Workspace
+            else
+              echo "Updating repository..."
+              cd ToIP_Workspace
+              git fetch origin
+              git checkout main
+              git reset --hard origin/main
+            fi
             
             # Prepare files
 
@@ -52,3 +61,6 @@ jobs:
             chmod +x ./gen_env.sh
             ./gen_env.sh
             docker compose up -d
+            # Подчищаем за собой
+            docker image prune -f --filter "until=24h"
+  
