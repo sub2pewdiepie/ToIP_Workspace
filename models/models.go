@@ -241,16 +241,19 @@ type OldTask struct {
 	User User `gorm:"foreignKey:CreatedBy;references:user_id" json:"-"`
 }
 type Task struct {
-	ID          int32     `gorm:"primaryKey;autoIncrement" json:"id"`
-	GroupID     int32     `gorm:"not null" json:"group_id"`
-	UserID      int32     `gorm:"not null" json:"user_id"`
-	Title       string    `gorm:"not null" json:"title"`
-	Description string    `gorm:"type:text" json:"description"`
-	IsVerified  bool      `gorm:"default:false" json:"is_verified"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	User        User      `json:"-"`
-	Group       Group     `json:"-"`
+	ID          int32      `gorm:"primaryKey;autoIncrement" json:"id"`
+	GroupID     int32      `gorm:"not null" json:"group_id"`
+	UserID      int32      `gorm:"not null" json:"user_id"`
+	Title       string     `gorm:"not null" json:"title"`
+	Description string     `gorm:"type:text" json:"description"`
+	IsVerified  bool       `gorm:"default:false" json:"is_verified"`
+	SubjectID   *int32     `gorm:"" json:"subject_id,omitempty"`
+	Deadline    *time.Time `gorm:"type:timestamp" json:"deadline,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	User        User       `json:"-"`
+	Group       Group      `json:"-"`
+	Subject     Subject    `json:"-"`
 }
 
 // Materials

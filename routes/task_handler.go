@@ -148,20 +148,22 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 		return
 	}
 
-	if err := h.taskService.CreateTask(req.GroupID, user.UserID, req.Title, req.Description); err != nil {
+	if err := h.taskService.CreateTask(req.GroupID, user.UserID, req.Title, req.Description, req.Deadline, req.SubjectID); err != nil {
 		utils.Logger.WithFields(logrus.Fields{
-			"error":    err,
-			"group_id": req.GroupID,
-			"title":    req.Title,
+			"error":      err,
+			"group_id":   req.GroupID,
+			"title":      req.Title,
+			"subject_id": req.SubjectID,
 		}).Error("Failed to create task")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create task"})
 		return
 	}
 
 	utils.Logger.WithFields(logrus.Fields{
-		"username": username,
-		"group_id": req.GroupID,
-		"title":    req.Title,
+		"username":   username,
+		"group_id":   req.GroupID,
+		"title":      req.Title,
+		"subject_id": req.SubjectID,
 	}).Info("Task created successfully")
 	c.JSON(http.StatusCreated, gin.H{"message": "Task created successfully"})
 }
@@ -381,4 +383,82 @@ func (h *TaskHandler) GetMyGroupTasks(c *gin.Context) {
 		"group_count": len(groupIDs),
 	}).Info("Successfully fetched tasks from user's groups")
 	c.JSON(http.StatusOK, tasks)
+}
+
+// DeleteTask godoc
+// @Summary Delete a task
+// @Description Delete a task by ID, if user is an admin or moderator of the task's group
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param id path int true "Task ID"
+// @Param Authorization header string true "Bearer JWT"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/tasks/{id} [delete]
+func (h *TaskHandler) DeleteTask(c *gin.Context) {
+	taskIDStr := c.Param("id")
+	taskID, err := strconv.Atoi(taskIDStr)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":   err,
+			"task_id": taskIDStr,
+		}).Error("Invalid task ID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid task ID"})
+		return
+	}
+
+	username, exists := c.Get("username")
+	if !exists {
+		utils.Logger.Error("Unauthorized: username not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	task, err := h.taskService.GetTaskByID(int32(taskID))
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":   err,
+			"task_id": taskID,
+		}).Error("Failed to fetch task")
+		c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+		return
+	}
+
+	isAuthorized, err := h.groupService.IsAdminOrModerator(task.GroupID, username.(string))
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+			"group_id": task.GroupID,
+		}).Error("Failed to check authorization")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check authorization"})
+		return
+	}
+	if !isAuthorized {
+		utils.Logger.WithFields(logrus.Fields{
+			"username": username,
+			"group_id": task.GroupID,
+		}).Warn("Forbidden: admin or moderator role required")
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied: admin or moderator role required"})
+		return
+	}
+
+	if err := h.taskService.DeleteTask(int32(taskID)); err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":   err,
+			"task_id": taskID,
+		}).Error("Failed to delete task")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete task"})
+		return
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+		"task_id":  taskID,
+	}).Info("Task deleted successfully")
+	c.JSON(http.StatusOK, gin.H{"message": "Task deleted successfully"})
 }
