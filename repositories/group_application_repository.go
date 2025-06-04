@@ -2,7 +2,9 @@ package repositories
 
 import (
 	"space/models"
+	"space/utils"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -53,4 +55,15 @@ func (r *GroupApplicationRepository) UpdateStatusByGroupAndUser(groupID, userID 
 	return r.db.Model(&models.GroupApplication{}).
 		Where("group_id = ? AND user_id = ?", groupID, userID).
 		Update("status", status).Error
+}
+
+func (r *AcademicGroupRepository) FindAll() ([]*models.AcademicGroup, error) {
+	var groups []*models.AcademicGroup
+	if err := r.db.Find(&groups).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error": err,
+		}).Error("Failed to fetch all academic groups")
+		return nil, err
+	}
+	return groups, nil
 }
