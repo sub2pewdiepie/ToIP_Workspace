@@ -33,6 +33,7 @@ jobs:
               git fetch origin
               git checkout main
               git reset --hard origin/main
+              docker compose down -v
             fi
             
             # Prepare files
