@@ -28,7 +28,7 @@ import (
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      185.221.155.133:8080
+// @host      4edu.su
 // @BasePath  /
 
 // @securityDefinitions.apikey ApiKeyAuth
