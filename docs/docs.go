@@ -1418,7 +1418,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Deletes a group by ID",
+                "description": "Deletes a group by ID, restricted to the group admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1432,6 +1432,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "example": 1,
                         "description": "Group ID",
                         "name": "id",
                         "in": "path",
@@ -1447,7 +1448,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Group deleted",
+                        "description": "OK",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1456,7 +1457,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid group ID",
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1473,8 +1474,17 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
-                        "description": "Group not found",
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {

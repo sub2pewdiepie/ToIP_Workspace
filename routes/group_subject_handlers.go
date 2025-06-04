@@ -264,28 +264,62 @@ func (h *GroupHandler) UpdateGroup(c *gin.Context) {
 
 // DeleteGroup godoc
 // @Summary Delete a group
-// @Description Deletes a group by ID
+// @Description Deletes a group by ID, restricted to the group admin.
 // @Tags groups
 // @Accept json
 // @Produce json
-// @Param id path int true "Group ID"
+// @Param id path int true "Group ID" example(1)
 // @Param Authorization header string true "Bearer JWT"
-// @Success 200 {object} map[string]string "Group deleted"
-// @Failure 400 {object} map[string]string "Invalid group ID"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "Group not found"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
 // @Router /api/groups/{id} [delete]
 func (h *GroupHandler) DeleteGroup(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": idStr,
+		}).Error("Invalid group ID")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid group ID"})
 		return
 	}
-	if err := h.service.DeleteGroup(int32(id)); err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Group not found"})
+
+	username, exists := c.Get("username")
+	if !exists {
+		utils.Logger.Error("Unauthorized: username not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+		"group_id": id,
+	}).Debug("Attempting to delete group")
+
+	err = h.service.DeleteGroup(int32(id), username.(string))
+	if err != nil {
+		switch err.Error() {
+		case "group not found":
+			c.JSON(http.StatusNotFound, gin.H{"error": "Group not found"})
+		case "user not found":
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		case "only group admin can delete the group":
+			c.JSON(http.StatusForbidden, gin.H{"error": "Only group admin can delete the group"})
+		default:
+			utils.Logger.WithFields(logrus.Fields{
+				"error":    err,
+				"username": username,
+				"group_id": id,
+			}).Error("Failed to delete group")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete group"})
+		}
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "Group deleted"})
 }
 
