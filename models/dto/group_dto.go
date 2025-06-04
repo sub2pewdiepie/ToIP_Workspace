@@ -33,3 +33,13 @@ func ToGroupDTO(group *models.Group) GroupDTO {
 		AcademicGroup:   group.AcademicGroup.Name,
 	}
 }
+
+type CreateGroupRequest struct {
+	Name            string `json:"name" binding:"required"`
+	AcademicGroupID int32  `json:"academic_group_id" binding:"required"`
+}
+
+type UpdateGroupRequest struct {
+	Name            string `json:"name,omitempty"`
+	AcademicGroupID int32  `json:"academic_group_id,omitempty"`
+}

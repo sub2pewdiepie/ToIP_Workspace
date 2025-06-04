@@ -27,19 +27,19 @@ type ReviewStatusRequest struct {
 
 // ReviewApplication godoc
 // @Summary Review a group application
-// @Description Approve or reject a group application by its ID
+// @Description Approve or reject a group application for a user to join a group. Requires admin or moderator privileges for the group.
 // @Tags group_applications
 // @Accept json
 // @Produce json
-// @Param id path int true "Application ID"
-// @Param body body ReviewStatusRequest true "Review status (approved or rejected)"
+// @Param group_id path int true "Group ID"
+// @Param body body ReviewStatusRequest true "Review details"
 // @Param Authorization header string true "Bearer JWT"
-// @Success 200 {object} map[string]string "Success message"
-// @Failure 400 {object} map[string]string "Invalid input"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 403 {object} map[string]string "Forbidden"
-// @Failure 404 {object} map[string]string "Application not found"
-// @Router /api/groups/applications/{id}/review [patch]
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/groups/applications/{group_id}/review [patch]
 func (h *GroupApplicationHandler) ReviewApplication(c *gin.Context) {
 	groupIDStr := c.Param("group_id")
 
@@ -105,15 +105,16 @@ func (h *GroupApplicationHandler) ReviewApplication(c *gin.Context) {
 
 // CreateApplication godoc
 // @Summary Apply to a group
-// @Description Submit an application to join a group
+// @Description Submit an application to join a group with an optional message.
 // @Tags group_applications
 // @Accept json
 // @Produce json
-// @Param body body dto.CreateApplicationRequest true "Application info"
+// @Param body body dto.CreateApplicationRequest true "Application details"
 // @Param Authorization header string true "Bearer JWT"
-// @Success 201 {object} map[string]string "Application submitted"
-// @Failure 400 {object} map[string]string "Validation or business logic error"
-// @Failure 401 {object} map[string]string "Unauthorized"
+// @Success 201 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
 // @Router /api/groups/applications [post]
 func (h *GroupApplicationHandler) CreateApplication(c *gin.Context) {
 	var req dto.CreateApplicationRequest
@@ -157,14 +158,15 @@ func (h *GroupApplicationHandler) CreateApplication(c *gin.Context) {
 
 // GetPendingApplications godoc
 // @Summary Get pending group applications
-// @Description Retrieve all pending applications for groups where the user is an admin or moderator
+// @Description Retrieve all pending applications for groups where the user is an admin or moderator.
 // @Tags group_applications
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Bearer JWT"
 // @Success 200 {array} dto.GroupApplicationDTO
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 500 {object} map[string]string "Internal server error"
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 500 {object} map[string]string
 // @Router /api/groups/applications/pending [get]
 func (h *GroupApplicationHandler) GetPendingApplications(c *gin.Context) {
 	username, exists := c.Get("username")

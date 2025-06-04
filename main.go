@@ -54,7 +54,7 @@ func main() {
 	groupModerService := services.NewGroupModerService(groupModerRepo)
 	groupModerHandler := routes.NewGroupModerHandler(groupModerService)
 
-	groupRepo := repositories.NewGroupRepository(database.DB)
+	groupRepo := repositories.NewGroupRepository(database.DB, userRepo)
 	groupService := services.NewGroupService(groupRepo, userRepo, groupuserRepo, groupModerRepo)
 	groupHandler := routes.NewGroupHandler(groupService)
 
@@ -114,6 +114,7 @@ func main() {
 		protected.DELETE("/groups/:id", groupHandler.DeleteGroup)
 		protected.GET("/groups/available", groupHandler.GetAvailableGroups)
 		protected.GET("/groups/:id/users", groupHandler.GetGroupUsers)
+		protected.GET("/groups/my-groups", groupHandler.GetUserGroups)
 		// Subject endpoints
 		protected.GET("/subjects/:id", subjectHandler.GetSubject)
 		protected.POST("/subjects", subjectHandler.CreateSubject)

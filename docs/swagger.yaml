@@ -1,5 +1,14 @@
 basePath: /
 definitions:
+  dto.AcademicGroupDTO:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   dto.CreateApplicationRequest:
     properties:
       group_id:
@@ -8,6 +17,16 @@ definitions:
         type: string
     required:
     - group_id
+    type: object
+  dto.CreateGroupRequest:
+    properties:
+      academic_group_id:
+        type: integer
+      name:
+        type: string
+    required:
+    - academic_group_id
+    - name
     type: object
   dto.CreateTaskRequest:
     properties:
@@ -111,6 +130,13 @@ definitions:
       username:
         type: string
     type: object
+  dto.UpdateGroupRequest:
+    properties:
+      academic_group_id:
+        type: integer
+      name:
+        type: string
+    type: object
   dto.UserDTO:
     properties:
       created_at:
@@ -209,13 +235,6 @@ definitions:
       username:
         type: string
     type: object
-  routes.Credentials:
-    properties:
-      password:
-        type: string
-      username:
-        type: string
-    type: object
   routes.RegisterInput:
     properties:
       email:
@@ -242,6 +261,16 @@ definitions:
     - status
     - username
     type: object
+  services.LoginInput:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
 host: 4edu.su
 info:
   contact:
@@ -255,6 +284,40 @@ info:
   version: "1.0"
 paths:
   /api/academic-groups:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all academic groups
+      parameters:
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.AcademicGroupDTO'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all academic groups
+      tags:
+      - academic-groups
     post:
       consumes:
       - application/json
@@ -766,14 +829,18 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieves a paginated list of groups with name, admin name, and
-        academic group
+      description: Retrieves a paginated list of groups with name, admin username,
+        and academic group. Accessible to any authenticated user.
       parameters:
-      - description: Page number (default 1)
+      - default: 1
+        description: Page number
+        example: 1
         in: query
         name: page
         type: integer
-      - description: Items per page (default 10)
+      - default: 10
+        description: Items per page
+        example: 10
         in: query
         name: page_size
         type: integer
@@ -790,13 +857,19 @@ paths:
           schema:
             $ref: '#/definitions/dto.GetGroupsResponse'
         "400":
-          description: Invalid page or page_size
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
             type: object
         "401":
           description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
           schema:
             additionalProperties:
               type: string
@@ -808,7 +881,7 @@ paths:
       consumes:
       - application/json
       description: Creates a group with the provided details, setting the authenticated
-        user as admin
+        user as admin.
       parameters:
       - description: Bearer JWT
         in: header
@@ -820,7 +893,7 @@ paths:
         name: group
         required: true
         schema:
-          $ref: '#/definitions/models.Group'
+          $ref: '#/definitions/dto.CreateGroupRequest'
       produces:
       - application/json
       responses:
@@ -829,13 +902,19 @@ paths:
           schema:
             $ref: '#/definitions/dto.GroupDTO'
         "400":
-          description: Invalid request body or missing required fields
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
             type: object
         "401":
           description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
           schema:
             additionalProperties:
               type: string
@@ -892,9 +971,11 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieves a group with preloaded AcademicGroup and Admin data
+      description: Retrieves a group by ID with preloaded AcademicGroup and Admin
+        data. Accessible to any authenticated user.
       parameters:
       - description: Group ID
+        example: 1
         in: path
         name: id
         required: true
@@ -910,9 +991,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Group'
+            $ref: '#/definitions/dto.GroupDTO'
         "400":
-          description: Invalid group ID
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
@@ -924,7 +1005,7 @@ paths:
               type: string
             type: object
         "404":
-          description: Group not found
+          description: Not Found
           schema:
             additionalProperties:
               type: string
@@ -935,10 +1016,11 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Updates a group's name or academic_group_id, restricted to the
-        group admin
+      description: Updates a group's name or academic group ID, restricted to the
+        group admin.
       parameters:
       - description: Group ID
+        example: 1
         in: path
         name: id
         required: true
@@ -953,16 +1035,16 @@ paths:
         name: group
         required: true
         schema:
-          $ref: '#/definitions/models.Group'
+          $ref: '#/definitions/dto.UpdateGroupRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Group'
+            $ref: '#/definitions/dto.GroupDTO'
         "400":
-          description: Invalid group ID, request body, or unauthorized
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
@@ -973,8 +1055,14 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
-          description: Group not found
+          description: Not Found
           schema:
             additionalProperties:
               type: string
@@ -986,9 +1074,11 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get the admin and moderators of the specified group
+      description: Retrieves the admin and moderators of a group, accessible to admins
+        or moderators of the group.
       parameters:
       - description: Group ID
+        example: 1
         in: path
         name: id
         required: true
@@ -1036,9 +1126,11 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get a list of users who are members of the specified group
+      description: Retrieves a list of users who are members of the specified group,
+        accessible to group members.
       parameters:
       - description: Group ID
+        example: 1
         in: path
         name: id
         required: true
@@ -1088,9 +1180,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Submit an application to join a group
+      description: Submit an application to join a group with an optional message.
       parameters:
-      - description: Application info
+      - description: Application details
         in: body
         name: body
         required: true
@@ -1105,13 +1197,13 @@ paths:
       - application/json
       responses:
         "201":
-          description: Application submitted
+          description: Created
           schema:
             additionalProperties:
               type: string
             type: object
         "400":
-          description: Validation or business logic error
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
@@ -1122,21 +1214,28 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       summary: Apply to a group
       tags:
       - group_applications
-  /api/groups/applications/{id}/review:
+  /api/groups/applications/{group_id}/review:
     patch:
       consumes:
       - application/json
-      description: Approve or reject a group application by its ID
+      description: Approve or reject a group application for a user to join a group.
+        Requires admin or moderator privileges for the group.
       parameters:
-      - description: Application ID
+      - description: Group ID
         in: path
-        name: id
+        name: group_id
         required: true
         type: integer
-      - description: Review status (approved or rejected)
+      - description: Review details
         in: body
         name: body
         required: true
@@ -1151,13 +1250,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: Success message
+          description: OK
           schema:
             additionalProperties:
               type: string
             type: object
         "400":
-          description: Invalid input
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
@@ -1175,7 +1274,7 @@ paths:
               type: string
             type: object
         "404":
-          description: Application not found
+          description: Not Found
           schema:
             additionalProperties:
               type: string
@@ -1188,7 +1287,7 @@ paths:
       consumes:
       - application/json
       description: Retrieve all pending applications for groups where the user is
-        an admin or moderator
+        an admin or moderator.
       parameters:
       - description: Bearer JWT
         in: header
@@ -1210,8 +1309,14 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             additionalProperties:
               type: string
@@ -1223,16 +1328,18 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get a paginated list of groups where the user is not a member,
-        admin, or moderator
+      description: Retrieves a paginated list of groups where the authenticated user
+        is not a member, admin, or moderator.
       parameters:
       - default: 1
         description: Page number
+        example: 1
         in: query
         name: page
         type: integer
       - default: 10
-        description: Page size
+        description: Items per page
+        example: 10
         in: query
         name: page_size
         type: integer
@@ -1249,7 +1356,7 @@ paths:
           schema:
             $ref: '#/definitions/dto.GetGroupsResponse'
         "400":
-          description: Invalid input
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
@@ -1261,12 +1368,70 @@ paths:
               type: string
             type: object
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             additionalProperties:
               type: string
             type: object
       summary: Get groups available to apply to
+      tags:
+      - groups
+  /api/groups/my-groups:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of groups where the authenticated user
+        is a member, moderator, or admin.
+      parameters:
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        example: 1
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        example: 10
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetGroupsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get user's groups
       tags:
       - groups
   /api/subjects:
@@ -1738,37 +1903,44 @@ paths:
     post:
       consumes:
       - application/json
-      description: Хендлер авторизации
+      description: Authenticate a user with username and password, returning a JWT
+        token for protected endpoints.
       operationId: login
       parameters:
-      - description: credentials
+      - description: User credentials
         in: body
         name: input
         required: true
         schema:
-          $ref: '#/definitions/routes.Credentials'
+          $ref: '#/definitions/services.LoginInput'
       produces:
       - application/json
       responses:
         "200":
-          description: token
+          description: OK
           schema:
-            type: string
+            additionalProperties:
+              type: string
+            type: object
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
+            additionalProperties:
+              type: string
             type: object
         "401":
           description: Unauthorized
           schema:
-            additionalProperties: true
+            additionalProperties:
+              type: string
             type: object
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties: true
+            additionalProperties:
+              type: string
             type: object
+      summary: Authenticate user and generate JWT token
       tags:
       - auth
   /register:
