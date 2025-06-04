@@ -104,6 +104,7 @@ func main() {
 		protected.GET("/tasks/my-groups", taskHandler.GetMyGroupTasks)
 		protected.GET("/tasks/:id", taskHandler.GetTask)
 		protected.POST("/tasks", taskHandler.CreateTask)
+		protected.DELETE("tasks/:id", taskHandler.DeleteTask)
 		// protected.PATCH("/tasks/:id", taskHandler.UpdateTask)
 		protected.PATCH("/tasks/:id/verify", taskHandler.VerifyTask)
 		// Group endpoints
