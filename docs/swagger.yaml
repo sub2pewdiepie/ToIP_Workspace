@@ -926,9 +926,10 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Deletes a group by ID
+      description: Deletes a group by ID, restricted to the group admin.
       parameters:
       - description: Group ID
+        example: 1
         in: path
         name: id
         required: true
@@ -942,13 +943,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: Group deleted
+          description: OK
           schema:
             additionalProperties:
               type: string
             type: object
         "400":
-          description: Invalid group ID
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
@@ -959,8 +960,14 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
-          description: Group not found
+          description: Not Found
           schema:
             additionalProperties:
               type: string
