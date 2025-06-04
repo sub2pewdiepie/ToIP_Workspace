@@ -2062,6 +2062,82 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "description": "Delete a task by ID, if user is an admin or moderator of the task's group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Delete a task",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Task ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/tasks/{id}/verify": {
@@ -2277,10 +2353,16 @@ const docTemplate = `{
                 "title"
             ],
             "properties": {
+                "deadline": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
                 "group_id": {
+                    "type": "integer"
+                },
+                "subject_id": {
                     "type": "integer"
                 },
                 "title": {
@@ -2389,6 +2471,9 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
+                "deadline": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -2400,6 +2485,9 @@ const docTemplate = `{
                 },
                 "is_verified": {
                     "type": "boolean"
+                },
+                "subject_id": {
+                    "type": "integer"
                 },
                 "title": {
                     "type": "string"
