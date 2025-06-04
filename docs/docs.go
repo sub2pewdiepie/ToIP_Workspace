@@ -24,6 +24,57 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/api/academic-groups": {
+            "get": {
+                "description": "Retrieve a list of all academic groups",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "academic-groups"
+                ],
+                "summary": "Get all academic groups",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.AcademicGroupDTO"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Creates an academic group with the provided name",
                 "consumes": [
@@ -782,7 +833,7 @@ const docTemplate = `{
         },
         "/api/groups": {
             "get": {
-                "description": "Retrieves a paginated list of groups with name, admin name, and academic group",
+                "description": "Retrieves a paginated list of groups with name, admin username, and academic group. Accessible to any authenticated user.",
                 "consumes": [
                     "application/json"
                 ],
@@ -796,13 +847,17 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Page number (default 1)",
+                        "default": 1,
+                        "example": 1,
+                        "description": "Page number",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Items per page (default 10)",
+                        "default": 10,
+                        "example": 10,
+                        "description": "Items per page",
                         "name": "page_size",
                         "in": "query"
                     },
@@ -822,7 +877,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid page or page_size",
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -838,11 +893,20 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             },
             "post": {
-                "description": "Creates a group with the provided details, setting the authenticated user as admin",
+                "description": "Creates a group with the provided details, setting the authenticated user as admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -867,7 +931,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Group"
+                            "$ref": "#/definitions/dto.CreateGroupRequest"
                         }
                     }
                 ],
@@ -879,7 +943,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request body or missing required fields",
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -895,13 +959,22 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             }
         },
         "/api/groups/applications": {
             "post": {
-                "description": "Submit an application to join a group",
+                "description": "Submit an application to join a group with an optional message.",
                 "consumes": [
                     "application/json"
                 ],
@@ -914,7 +987,7 @@ const docTemplate = `{
                 "summary": "Apply to a group",
                 "parameters": [
                     {
-                        "description": "Application info",
+                        "description": "Application details",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -932,7 +1005,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Application submitted",
+                        "description": "Created",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -941,7 +1014,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Validation or business logic error",
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -957,13 +1030,22 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             }
         },
         "/api/groups/applications/pending": {
             "get": {
-                "description": "Retrieve all pending applications for groups where the user is an admin or moderator",
+                "description": "Retrieve all pending applications for groups where the user is an admin or moderator.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1002,8 +1084,17 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1014,9 +1105,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/groups/applications/{id}/review": {
+        "/api/groups/applications/{group_id}/review": {
             "patch": {
-                "description": "Approve or reject a group application by its ID",
+                "description": "Approve or reject a group application for a user to join a group. Requires admin or moderator privileges for the group.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1030,13 +1121,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Application ID",
-                        "name": "id",
+                        "description": "Group ID",
+                        "name": "group_id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Review status (approved or rejected)",
+                        "description": "Review details",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -1054,7 +1145,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success message",
+                        "description": "OK",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1063,7 +1154,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid input",
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1090,7 +1181,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Application not found",
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1103,7 +1194,7 @@ const docTemplate = `{
         },
         "/api/groups/available": {
             "get": {
-                "description": "Get a paginated list of groups where the user is not a member, admin, or moderator",
+                "description": "Retrieves a paginated list of groups where the authenticated user is not a member, admin, or moderator.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1118,6 +1209,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "default": 1,
+                        "example": 1,
                         "description": "Page number",
                         "name": "page",
                         "in": "query"
@@ -1125,7 +1217,8 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "default": 10,
-                        "description": "Page size",
+                        "example": 10,
+                        "description": "Items per page",
                         "name": "page_size",
                         "in": "query"
                     },
@@ -1145,7 +1238,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid input",
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1163,7 +1256,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1174,9 +1267,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/groups/{id}": {
+        "/api/groups/my-groups": {
             "get": {
-                "description": "Retrieves a group with preloaded AcademicGroup and Admin data",
+                "description": "Retrieves a paginated list of groups where the authenticated user is a member, moderator, or admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1186,32 +1279,41 @@ const docTemplate = `{
                 "tags": [
                     "groups"
                 ],
-                "summary": "Get a group by ID",
+                "summary": "Get user's groups",
                 "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Group ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Bearer JWT",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "example": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "example": 10,
+                        "description": "Items per page",
+                        "name": "page_size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Group"
+                            "$ref": "#/definitions/dto.GetGroupsResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid group ID",
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1229,7 +1331,83 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Group not found",
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/groups/{id}": {
+            "get": {
+                "description": "Retrieves a group by ID with preloaded AcademicGroup and Admin data. Accessible to any authenticated user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Get a group by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GroupDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1307,7 +1485,7 @@ const docTemplate = `{
                 }
             },
             "patch": {
-                "description": "Updates a group's name or academic_group_id, restricted to the group admin",
+                "description": "Updates a group's name or academic group ID, restricted to the group admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1321,6 +1499,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "example": 1,
                         "description": "Group ID",
                         "name": "id",
                         "in": "path",
@@ -1339,7 +1518,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Group"
+                            "$ref": "#/definitions/dto.UpdateGroupRequest"
                         }
                     }
                 ],
@@ -1347,11 +1526,11 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Group"
+                            "$ref": "#/definitions/dto.GroupDTO"
                         }
                     },
                     "400": {
-                        "description": "Invalid group ID, request body, or unauthorized",
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1368,8 +1547,17 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
-                        "description": "Group not found",
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -1382,7 +1570,7 @@ const docTemplate = `{
         },
         "/api/groups/{id}/moderators": {
             "get": {
-                "description": "Get the admin and moderators of the specified group",
+                "description": "Retrieves the admin and moderators of a group, accessible to admins or moderators of the group.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1396,6 +1584,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "example": 1,
                         "description": "Group ID",
                         "name": "id",
                         "in": "path",
@@ -1457,7 +1646,7 @@ const docTemplate = `{
         },
         "/api/groups/{id}/users": {
             "get": {
-                "description": "Get a list of users who are members of the specified group",
+                "description": "Retrieves a list of users who are members of the specified group, accessible to group members.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1471,6 +1660,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "example": 1,
                         "description": "Group ID",
                         "name": "id",
                         "in": "path",
@@ -2229,7 +2419,7 @@ const docTemplate = `{
         },
         "/login": {
             "post": {
-                "description": "Хендлер авторизации",
+                "description": "Authenticate a user with username and password, returning a JWT token for protected endpoints.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2239,44 +2429,54 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
+                "summary": "Authenticate user and generate JWT token",
                 "operationId": "login",
                 "parameters": [
                     {
-                        "description": "credentials",
+                        "description": "User credentials",
                         "name": "input",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/routes.Credentials"
+                            "$ref": "#/definitions/services.LoginInput"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "token",
+                        "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
                             "type": "object",
-                            "additionalProperties": true
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
                             "type": "object",
-                            "additionalProperties": true
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
-                            "additionalProperties": true
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -2332,6 +2532,20 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.AcademicGroupDTO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.CreateApplicationRequest": {
             "type": "object",
             "required": [
@@ -2342,6 +2556,21 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CreateGroupRequest": {
+            "type": "object",
+            "required": [
+                "academic_group_id",
+                "name"
+            ],
+            "properties": {
+                "academic_group_id": {
+                    "type": "integer"
+                },
+                "name": {
                     "type": "string"
                 }
             }
@@ -2500,6 +2729,17 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.UpdateGroupRequest": {
+            "type": "object",
+            "properties": {
+                "academic_group_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.UserDTO": {
             "type": "object",
             "properties": {
@@ -2650,17 +2890,6 @@ const docTemplate = `{
                 }
             }
         },
-        "routes.Credentials": {
-            "type": "object",
-            "properties": {
-                "password": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
         "routes.RegisterInput": {
             "type": "object",
             "required": [
@@ -2693,6 +2922,21 @@ const docTemplate = `{
                         "approved",
                         "rejected"
                     ]
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.LoginInput": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
                 },
                 "username": {
                     "type": "string"

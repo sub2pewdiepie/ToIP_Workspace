@@ -7,31 +7,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Credentials structure for login input
-type Credentials struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-// Simple hardcoded login credentials
-// FOR TESTING PURPOSES ONLY
-var users = map[string]string{
-	"user": "password",
-}
-
-// LoginHandler handles user login and JWT token generation
+// LoginHandler godoc
+// @Summary Authenticate user and generate JWT token
+// @Description Authenticate a user with username and password, returning a JWT token for protected endpoints.
 // @Tags auth
-// @Description Хендлер авторизации
 // @ID login
 // @Accept json
 // @Produce json
-// @Param input body Credentials true "credentials"
-// @Success 200 {string} string "token"
-// @Failure 400 {object} map[string]any
-// @Failure 401 {object} map[string]any
-// @Failure 500 {object} map[string]any
+// @Param input body services.LoginInput true "User credentials"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
 // @Router /login [post]
-// routes/auth.go
 func LoginHandler(authService *services.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input services.LoginInput

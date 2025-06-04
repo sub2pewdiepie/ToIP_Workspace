@@ -275,3 +275,38 @@ func (s *GroupService) GetUserGroupIDs(username string) ([]int32, error) {
 	}).Debug("Fetched user's group IDs")
 	return groupIDs, nil
 }
+
+func (s *GroupService) GetUserGroups(username string, page, pageSize int) (*dto.GetGroupsResponse, error) {
+	if page < 1 || pageSize < 1 || pageSize > 100 {
+		return nil, errors.New("invalid page or page_size")
+	}
+
+	groups, total, err := s.groupRepo.FindUserGroups(username, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	var groupDTOs []dto.GroupDTO
+	for _, group := range groups {
+		groupDTOs = append(groupDTOs, dto.ToGroupDTO(group))
+	}
+
+	totalPages := (total + int64(pageSize-1)) / int64(pageSize)
+	response := &dto.GetGroupsResponse{
+		Groups: groupDTOs,
+		Pagination: dto.PaginationMeta{
+			Page:     page,
+			PageSize: pageSize,
+			Total:    total,
+			Pages:    totalPages,
+		},
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username":  username,
+		"page":      page,
+		"page_size": pageSize,
+		"count":     len(groupDTOs),
+	}).Debug("Fetched user's groups")
+	return response, nil
+}

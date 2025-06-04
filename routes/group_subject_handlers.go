@@ -32,16 +32,16 @@ func NewSubjectHandler(service *services.SubjectService) *SubjectHandler {
 
 // GetGroup godoc
 // @Summary Get a group by ID
-// @Description Retrieves a group with preloaded AcademicGroup and Admin data
+// @Description Retrieves a group by ID with preloaded AcademicGroup and Admin data. Accessible to any authenticated user.
 // @Tags groups
 // @Accept json
 // @Produce json
-// @Param id path int true "Group ID"
+// @Param id path int true "Group ID" example(1)
 // @Param Authorization header string true "Bearer JWT"
-// @Success 200 {object} models.Group
-// @Failure 400 {object} map[string]string "Invalid group ID"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "Group not found"
+// @Success 200 {object} dto.GroupDTO
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
 // @Router /api/groups/{id} [get]
 func (h *GroupHandler) GetGroup(c *gin.Context) {
 	idStr := c.Param("id")
@@ -60,16 +60,17 @@ func (h *GroupHandler) GetGroup(c *gin.Context) {
 
 // GetAllGroups godoc
 // @Summary Get all groups with pagination
-// @Description Retrieves a paginated list of groups with name, admin name, and academic group
+// @Description Retrieves a paginated list of groups with name, admin username, and academic group. Accessible to any authenticated user.
 // @Tags groups
 // @Accept json
 // @Produce json
-// @Param page query int false "Page number (default 1)"
-// @Param page_size query int false "Items per page (default 10)"
+// @Param page query int false "Page number" default(1) example(1)
+// @Param page_size query int false "Items per page" default(10) example(10)
 // @Param Authorization header string true "Bearer JWT"
 // @Success 200 {object} dto.GetGroupsResponse
-// @Failure 400 {object} map[string]string "Invalid page or page_size"
-// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
 // @Router /api/groups [get]
 func (h *GroupHandler) GetAllGroups(c *gin.Context) {
 	pageStr := c.DefaultQuery("page", "1")
@@ -106,17 +107,17 @@ func (h *GroupHandler) GetAllGroups(c *gin.Context) {
 
 // GetAvailableGroups godoc
 // @Summary Get groups available to apply to
-// @Description Get a paginated list of groups where the user is not a member, admin, or moderator
+// @Description Retrieves a paginated list of groups where the authenticated user is not a member, admin, or moderator.
 // @Tags groups
 // @Accept json
 // @Produce json
-// @Param page query int false "Page number" default(1)
-// @Param page_size query int false "Page size" default(10)
+// @Param page query int false "Page number" default(1) example(1)
+// @Param page_size query int false "Items per page" default(10) example(10)
 // @Param Authorization header string true "Bearer JWT"
 // @Success 200 {object} dto.GetGroupsResponse
-// @Failure 400 {object} map[string]string "Invalid input"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 500 {object} map[string]string "Internal server error"
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
 // @Router /api/groups/available [get]
 func (h *GroupHandler) GetAvailableGroups(c *gin.Context) {
 	pageStr := c.DefaultQuery("page", "1")
@@ -185,15 +186,16 @@ func (h *GroupHandler) GetAvailableGroups(c *gin.Context) {
 
 // CreateGroup godoc
 // @Summary Create a new group
-// @Description Creates a group with the provided details, setting the authenticated user as admin
+// @Description Creates a group with the provided details, setting the authenticated user as admin.
 // @Tags groups
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Bearer JWT"
-// @Param group body models.Group true "Group data"
+// @Param group body dto.CreateGroupRequest true "Group data"
 // @Success 201 {object} dto.GroupDTO
-// @Failure 400 {object} map[string]string "Invalid request body or missing required fields"
-// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
 // @Router /api/groups [post]
 func (h *GroupHandler) CreateGroup(c *gin.Context) {
 	var group models.Group
@@ -217,17 +219,18 @@ func (h *GroupHandler) CreateGroup(c *gin.Context) {
 
 // UpdateGroup godoc
 // @Summary Update a group
-// @Description Updates a group's name or academic_group_id, restricted to the group admin
+// @Description Updates a group's name or academic group ID, restricted to the group admin.
 // @Tags groups
 // @Accept json
 // @Produce json
-// @Param id path int true "Group ID"
+// @Param id path int true "Group ID" example(1)
 // @Param Authorization header string true "Bearer JWT"
-// @Param group body models.Group true "Group data (partial)"
-// @Success 200 {object} models.Group
-// @Failure 400 {object} map[string]string "Invalid group ID, request body, or unauthorized"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "Group not found"
+// @Param group body dto.UpdateGroupRequest true "Group data (partial)"
+// @Success 200 {object} dto.GroupDTO
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
 // @Router /api/groups/{id} [patch]
 func (h *GroupHandler) UpdateGroup(c *gin.Context) {
 	idStr := c.Param("id")
@@ -413,11 +416,11 @@ func (h *SubjectHandler) DeleteSubject(c *gin.Context) {
 
 // GetGroupModerators godoc
 // @Summary Get group moderators and admin
-// @Description Get the admin and moderators of the specified group
+// @Description Retrieves the admin and moderators of a group, accessible to admins or moderators of the group.
 // @Tags groups
 // @Accept json
 // @Produce json
-// @Param id path int true "Group ID"
+// @Param id path int true "Group ID" example(1)
 // @Param Authorization header string true "Bearer JWT"
 // @Success 200 {object} dto.ModeratorsResponse
 // @Failure 400 {object} map[string]string
@@ -484,11 +487,11 @@ func (h *GroupHandler) GetGroupModerators(c *gin.Context) {
 
 // GetGroupUsers godoc
 // @Summary Get users in a group
-// @Description Get a list of users who are members of the specified group
+// @Description Retrieves a list of users who are members of the specified group, accessible to group members.
 // @Tags groups
 // @Accept json
 // @Produce json
-// @Param id path int true "Group ID"
+// @Param id path int true "Group ID" example(1)
 // @Param Authorization header string true "Bearer JWT"
 // @Success 200 {array} dto.UserDTO
 // @Failure 400 {object} map[string]string
@@ -550,4 +553,63 @@ func (h *GroupHandler) GetGroupUsers(c *gin.Context) {
 		"count":    len(users),
 	}).Info("Successfully fetched group users")
 	c.JSON(http.StatusOK, users)
+}
+
+// GetUserGroups godoc
+// @Summary Get user's groups
+// @Description Retrieves a paginated list of groups where the authenticated user is a member, moderator, or admin.
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer JWT"
+// @Param page query int false "Page number" default(1) example(1)
+// @Param page_size query int false "Items per page" default(10) example(10)
+// @Success 200 {object} dto.GetGroupsResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/groups/my-groups [get]
+func (h *GroupHandler) GetUserGroups(c *gin.Context) {
+	username, exists := c.Get("username")
+	if !exists {
+		utils.Logger.Error("Unauthorized: username not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page"})
+		return
+	}
+	pageSize, err := strconv.Atoi(c.DefaultQuery("page_size", "10"))
+	if err != nil || pageSize < 1 || pageSize > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page_size"})
+		return
+	}
+
+	response, err := h.service.GetUserGroups(username.(string), page, pageSize)
+	if err != nil {
+		if err.Error() == "record not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+		utils.Logger.WithFields(logrus.Fields{
+			"error":     err,
+			"username":  username,
+			"page":      page,
+			"page_size": pageSize,
+		}).Error("Failed to fetch user's groups")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch groups"})
+		return
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username":  username,
+		"page":      page,
+		"page_size": pageSize,
+		"count":     len(response.Groups),
+	}).Info("Successfully fetched user's groups")
+	c.JSON(http.StatusOK, response)
 }
