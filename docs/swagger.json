@@ -13,7 +13,7 @@
         },
         "version": "1.0"
     },
-    "host": "185.221.155.133:8080",
+    "host": "4edu.su",
     "basePath": "/",
     "paths": {
         "/api/academic-groups": {
