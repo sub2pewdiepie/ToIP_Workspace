@@ -50,7 +50,7 @@ func (h *GroupHandler) GetGroup(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid group ID"})
 		return
 	}
-	group, err := h.service.GetGroupByID(int32(id))
+	group, err := h.service.GetGroupDTOByID(int32(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Group not found"})
 		return

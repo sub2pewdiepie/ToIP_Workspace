@@ -25,6 +25,18 @@ func NewGroupService(groupRepo *repositories.GroupRepository, userRepo repositor
 func (s *GroupService) GetGroupByID(id int32) (*models.Group, error) {
 	return s.groupRepo.GetByID(id)
 }
+func (s *GroupService) GetGroupDTOByID(id int32) (dto.GroupDTO, error) {
+	group, error := s.groupRepo.GetByID(id)
+	groupDTO := dto.GroupDTO{
+		ID:              group.ID,
+		Name:            group.Name,
+		AdminUsername:   group.Admin.Username,
+		AcademicGroupID: group.AcademicGroupID,
+		AcademicGroup:   group.AcademicGroup.Name}
+
+	return groupDTO, error
+}
+
 func (s *GroupService) GetAllGroups(page, pageSize int32) ([]dto.GroupDTO, int64, error) {
 	groups, total, err := s.groupRepo.GetAllWithPagination(page, pageSize)
 	if err != nil {
