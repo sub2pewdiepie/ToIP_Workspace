@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"space/auth"
 	"space/database"
@@ -80,12 +79,12 @@ func main() {
 
 	// Seed database
 
-	if err := database.SeedAcademicGroups(database.DB, academicGroupRepo); err != nil {
-		log.Fatalf("failed to seed academic groups: %v", err)
-	}
-	if err := database.SeedSubjects(database.DB, subjectRepo, academicGroupRepo); err != nil {
-		log.Fatalf("failed to seed academic groups: %v", err)
-	}
+	// if err := database.SeedAcademicGroups(database.DB, academicGroupRepo); err != nil {
+	// 	log.Fatalf("failed to seed academic groups: %v", err)
+	// }
+	// if err := database.SeedSubjects(database.DB, subjectRepo, academicGroupRepo); err != nil {
+	// 	log.Fatalf("failed to seed academic groups: %v", err)
+	// }
 
 	// Public routes
 	router.POST("/login", routes.LoginHandler(authService))
@@ -120,9 +119,8 @@ func main() {
 			groups.GET("/available", groupHandler.GetAvailableGroups)
 			groups.GET("/:id/users", groupHandler.GetGroupUsers)
 			groups.GET("/my-groups", groupHandler.GetUserGroups)
-			groups.GET("/:group_id/subjects/:subject_id/tasks", taskHandler.GetTasksBySubject)
+			groups.GET("/:id/subjects/:subject_id/tasks", taskHandler.GetTasksBySubject)
 			groups.GET("/:id/subjects", taskHandler.GetSubjectsByGroup)
-			groups.GET("/:group_id/subjects/:subject_id/tasks", taskHandler.GetTasksBySubject)
 		}
 
 		// Subject endpoints
