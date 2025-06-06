@@ -62,3 +62,79 @@ func (r *SubjectRepository) FindByName(name string) (*models.Subject, error) {
 	}
 	return &subject, nil
 }
+
+func (r *SubjectRepository) FindByAcademicGroupID(academicGroupID int32, page, pageSize int) ([]models.Subject, int64, error) {
+	var subjects []models.Subject
+	var total int64
+
+	query := r.db.Model(&models.Subject{}).Where("academic_group_id = ?", academicGroupID).
+		Preload("AcademicGroup")
+
+	if err := query.Count(&total).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":             err,
+			"academic_group_id": academicGroupID,
+		}).Error("Failed to count subjects")
+		return nil, 0, err
+	}
+
+	if err := query.Offset((page - 1) * pageSize).Limit(pageSize).Find(&subjects).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":             err,
+			"academic_group_id": academicGroupID,
+		}).Error("Failed to find subjects")
+		return nil, 0, err
+	}
+
+	return subjects, total, nil
+}
+
+func (r *SubjectRepository) FindByUserGroups(userID int32, page, pageSize int) ([]models.Subject, []models.Group, int64, error) {
+	var subjects []models.Subject
+	var groups []models.Group
+	var total int64
+
+	// Get groups the user is a member of
+	if err := r.db.Model(&models.Group{}).
+		Joins("JOIN group_users ON groups.id = group_users.group_id").
+		Where("group_users.user_id = ?", userID).
+		Find(&groups).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":   err,
+			"user_id": userID,
+		}).Error("Failed to find user groups")
+		return nil, nil, 0, err
+	}
+
+	if len(groups) == 0 {
+		return nil, nil, 0, nil
+	}
+
+	// Get unique academic_group_ids
+	academicGroupIDs := make([]int32, 0, len(groups))
+	for _, group := range groups {
+		academicGroupIDs = append(academicGroupIDs, group.AcademicGroupID)
+	}
+
+	query := r.db.Model(&models.Subject{}).
+		Where("academic_group_id IN ?", academicGroupIDs).
+		Preload("AcademicGroup")
+
+	if err := query.Count(&total).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":   err,
+			"user_id": userID,
+		}).Error("Failed to count user subjects")
+		return nil, nil, 0, err
+	}
+
+	if err := query.Offset((page - 1) * pageSize).Limit(pageSize).Find(&subjects).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":   err,
+			"user_id": userID,
+		}).Error("Failed to find user subjects")
+		return nil, nil, 0, err
+	}
+
+	return subjects, groups, total, nil
+}

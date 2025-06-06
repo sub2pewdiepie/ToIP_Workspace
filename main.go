@@ -48,6 +48,10 @@ func main() {
 	userRepo := repositories.NewUserRepository(database.DB)
 	authService := services.NewAuthService(userRepo)
 
+	academicGroupRepo := repositories.NewAcademicGroupRepository(database.DB)
+	academicGroupService := services.NewAcademicGroupService(academicGroupRepo)
+	academicGroupHandler := routes.NewAcademicGroupHandler(academicGroupService)
+
 	groupuserRepo := repositories.NewGroupUserRepository(database.DB)
 	// groupuserService := services.NewGroupUserService(groupuserRepo)
 	groupModerRepo := repositories.NewGroupModerRepository(database.DB)
@@ -58,21 +62,17 @@ func main() {
 	groupService := services.NewGroupService(groupRepo, userRepo, groupuserRepo, groupModerRepo)
 	groupHandler := routes.NewGroupHandler(groupService)
 
+	subjectRepo := repositories.NewSubjectRepository(database.DB)
+	subjectService := services.NewSubjectService(subjectRepo, groupRepo, userRepo)
+	subjectHandler := routes.NewSubjectHandler(subjectService)
+
 	taskRepo := repositories.NewTaskRepository(database.DB)
 	taskService := services.NewTaskService(taskRepo)
-	taskHandler := routes.NewTaskHandler(taskService, groupService)
-
-	subjectRepo := repositories.NewSubjectRepository(database.DB)
-	subjectService := services.NewSubjectService(subjectRepo)
-	subjectHandler := routes.NewSubjectHandler(subjectService)
+	taskHandler := routes.NewTaskHandler(taskService, groupService, subjectService)
 
 	groupUserRepo := repositories.NewGroupUserRepository(database.DB)
 	groupUserService := services.NewGroupUserService(groupUserRepo)
 	groupUserHandler := routes.NewGroupUserHandler(groupUserService)
-
-	academicGroupRepo := repositories.NewAcademicGroupRepository(database.DB)
-	academicGroupService := services.NewAcademicGroupService(academicGroupRepo)
-	academicGroupHandler := routes.NewAcademicGroupHandler(academicGroupService)
 
 	appRepo := repositories.NewGroupApplicationRepository(database.DB)
 	appService := services.NewGroupApplicationService(appRepo, groupRepo, groupModerRepo, userRepo, groupUserRepo)
@@ -100,26 +100,38 @@ func main() {
 	protected.Use(auth.AuthMiddleware())
 	{
 		// Task endpoints
-		protected.GET("/tasks", taskHandler.GetGroupTasks)
-		protected.GET("/tasks/my-groups", taskHandler.GetMyGroupTasks)
-		protected.GET("/tasks/:id", taskHandler.GetTask)
-		protected.POST("/tasks", taskHandler.CreateTask)
-		protected.DELETE("tasks/:id", taskHandler.DeleteTask)
-		// protected.PATCH("/tasks/:id", taskHandler.UpdateTask)
-		protected.PATCH("/tasks/:id/verify", taskHandler.VerifyTask)
+		tasks := protected.Group("/tasks")
+		{
+			tasks.GET("", taskHandler.GetGroupTasks)
+			tasks.GET("/my-groups", taskHandler.GetMyGroupTasks)
+			tasks.GET("/:id", taskHandler.GetTask)
+			tasks.POST("/", taskHandler.CreateTask)
+			tasks.DELETE("/:id", taskHandler.DeleteTask)
+			// protected.PATCH("/tasks/:id", taskHandler.UpdateTask)
+			tasks.PATCH("/:id/verify", taskHandler.VerifyTask)
+		}
 		// Group endpoints
-		protected.GET("/groups/:id", groupHandler.GetGroup)
-		protected.POST("/groups", groupHandler.CreateGroup)
-		protected.PATCH("/groups/:id", groupHandler.UpdateGroup)
-		protected.DELETE("/groups/:id", groupHandler.DeleteGroup)
-		protected.GET("/groups/available", groupHandler.GetAvailableGroups)
-		protected.GET("/groups/:id/users", groupHandler.GetGroupUsers)
-		protected.GET("/groups/my-groups", groupHandler.GetUserGroups)
+		groups := protected.Group("/groups")
+		{
+			groups.GET("/:id", groupHandler.GetGroup)
+			groups.POST("", groupHandler.CreateGroup)
+			groups.PATCH("/:id", groupHandler.UpdateGroup)
+			groups.DELETE("/:id", groupHandler.DeleteGroup)
+			groups.GET("/available", groupHandler.GetAvailableGroups)
+			groups.GET("/:id/users", groupHandler.GetGroupUsers)
+			groups.GET("/my-groups", groupHandler.GetUserGroups)
+			groups.GET("/:group_id/subjects/:subject_id/tasks", taskHandler.GetTasksBySubject)
+			groups.GET("/:id/subjects", taskHandler.GetSubjectsByGroup)
+			groups.GET("/:group_id/subjects/:subject_id/tasks", taskHandler.GetTasksBySubject)
+		}
+
 		// Subject endpoints
 		protected.GET("/subjects/:id", subjectHandler.GetSubject)
 		protected.POST("/subjects", subjectHandler.CreateSubject)
 		protected.PATCH("/subjects/:id", subjectHandler.UpdateSubject)
 		protected.DELETE("/subjects/:id", subjectHandler.DeleteSubject)
+		protected.GET("/subjects/my-groups", taskHandler.GetUserSubjects)
+
 		// GroupUser endpoints
 		protected.GET("/group-users/:group_id/:user_id", groupUserHandler.GetGroupUser)
 		protected.POST("/group-users", groupUserHandler.CreateGroupUser)

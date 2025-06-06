@@ -210,21 +210,7 @@ type OldSubject struct {
 }
 
 // Tasks
-//
-//		type Task struct {
-//			TaskID      int32  `gorm:"primaryKey"`
-//			SubjectID   int32  `gorm:"foreignKey:SubjectID;references:SubjectID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
-//			Title       string `gorm:"type:varchar(255);not null"`
-//			Description string `gorm:"type:text"`
-//			// CreatedBy   int32     `gorm:"foreignKey:CreatedBy;references:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
-//			CreaterID int32
-//			IsActive  bool      `gorm:"default:true"`
-//			CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-//			UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-//			Subject   Subject   `gorm:"foreignKey:SubjectID"`
-//			// Creator   User      `gorm:"foreignKey:CreatedBy"`
-//			Creator User
-//	}
+
 type OldTask struct {
 	TaskID      int32     `gorm:"column:task_id;primaryKey;autoIncrement"`
 	SubjectID   int32     `gorm:"foreignKey:SubjectID;references:SubjectID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`

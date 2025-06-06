@@ -107,6 +107,47 @@ definitions:
         example: 25
         type: integer
     type: object
+  dto.SubjectDTO:
+    properties:
+      academic_group_id:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  dto.SubjectDetailDTO:
+    properties:
+      academic_group:
+        $ref: '#/definitions/dto.AcademicGroupDTO'
+      groups:
+        description: Groups in this academic group
+        items:
+          $ref: '#/definitions/dto.GroupDTO'
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  dto.SubjectsDetailResponse:
+    properties:
+      pagination:
+        $ref: '#/definitions/dto.PaginationMeta'
+      subjects:
+        items:
+          $ref: '#/definitions/dto.SubjectDetailDTO'
+        type: array
+    type: object
+  dto.SubjectsResponse:
+    properties:
+      pagination:
+        $ref: '#/definitions/dto.PaginationMeta'
+      subjects:
+        items:
+          $ref: '#/definitions/dto.SubjectDTO'
+        type: array
+    type: object
   dto.TaskDTO:
     properties:
       created_at:
@@ -129,6 +170,49 @@ definitions:
         type: integer
       username:
         type: string
+    type: object
+  dto.TaskDetailDTO:
+    properties:
+      academic_group:
+        $ref: '#/definitions/dto.AcademicGroupDTO'
+      created_at:
+        type: string
+      deadline:
+        type: string
+      description:
+        type: string
+      group:
+        $ref: '#/definitions/dto.GroupDTO'
+      id:
+        type: integer
+      is_verified:
+        type: boolean
+      subject:
+        $ref: '#/definitions/dto.SubjectDTO'
+      title:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/dto.UserDTO'
+    type: object
+  dto.TasksDetailResponse:
+    properties:
+      pagination:
+        $ref: '#/definitions/dto.PaginationMeta'
+      tasks:
+        items:
+          $ref: '#/definitions/dto.TaskDetailDTO'
+        type: array
+    type: object
+  dto.TasksResponse:
+    properties:
+      pagination:
+        $ref: '#/definitions/dto.PaginationMeta'
+      tasks:
+        items:
+          $ref: '#/definitions/dto.TaskDTO'
+        type: array
     type: object
   dto.UpdateGroupRequest:
     properties:
@@ -922,6 +1006,76 @@ paths:
       summary: Create a new group
       tags:
       - groups
+  /api/groups/{group_id}/subjects/{subject_id}/tasks:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of tasks for a subject within a group,
+        accessible to group members.
+      parameters:
+      - description: Group ID
+        example: 1
+        in: path
+        name: group_id
+        required: true
+        type: integer
+      - description: Subject ID
+        example: 1
+        in: path
+        name: subject_id
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        example: 1
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        example: 10
+        in: query
+        name: page_size
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TasksResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get tasks by subject and group
+      tags:
+      - tasks
   /api/groups/{id}:
     delete:
       consumes:
@@ -1129,6 +1283,70 @@ paths:
       summary: Get group moderators and admin
       tags:
       - groups
+  /api/groups/{id}/subjects:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of subjects for the group's academic
+        group, accessible to group members.
+      parameters:
+      - description: Group ID
+        example: 1
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        example: 1
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        example: 10
+        in: query
+        name: page_size
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SubjectsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get subjects by group ID
+      tags:
+      - subjects
   /api/groups/{id}/users:
     get:
       consumes:
@@ -1618,16 +1836,24 @@ paths:
       summary: Update a subject
       tags:
       - subjects
-  /api/tasks:
+  /api/subjects/my-groups:
     get:
       consumes:
       - application/json
-      description: Get a list of tasks for the specified group
+      description: Retrieves a paginated list of subjects from the academic groups
+        of the user's groups, including group and academic group details.
       parameters:
-      - description: Group ID
+      - default: 1
+        description: Page number
+        example: 1
         in: query
-        name: group_id
-        required: true
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        example: 10
+        in: query
+        name: page_size
         type: integer
       - description: Bearer JWT
         in: header
@@ -1640,9 +1866,69 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/dto.TaskDTO'
-            type: array
+            $ref: '#/definitions/dto.SubjectsDetailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get subjects from user's groups
+      tags:
+      - subjects
+  /api/tasks:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of tasks for the specified group
+      parameters:
+      - description: Group ID
+        in: query
+        name: group_id
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        example: 1
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        example: 10
+        in: query
+        name: page_size
+        type: integer
+      - description: Bearer JWT
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TasksResponse'
         "400":
           description: Bad Request
           schema:
@@ -1875,8 +2161,21 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get a list of tasks from all groups the user is a member of
+      description: Get a paginated list of tasks from all groups the user is a member
+        of, including group, subject, and academic group details.
       parameters:
+      - default: 1
+        description: Page number
+        example: 1
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        example: 10
+        in: query
+        name: page_size
+        type: integer
       - description: Bearer JWT
         in: header
         name: Authorization
@@ -1888,9 +2187,13 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/dto.TaskDTO'
-            type: array
+            $ref: '#/definitions/dto.TasksDetailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "401":
           description: Unauthorized
           schema:
