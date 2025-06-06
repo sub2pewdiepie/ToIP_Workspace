@@ -39,9 +39,9 @@ type ReviewStatusRequest struct {
 // @Failure 401 {object} map[string]string
 // @Failure 403 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /api/groups/applications/{group_id}/review [patch]
+// @Router /api/groups/applications/{id}/review [patch]
 func (h *GroupApplicationHandler) ReviewApplication(c *gin.Context) {
-	groupIDStr := c.Param("group_id")
+	groupIDStr := c.Param("id")
 
 	utils.Logger.WithFields(logrus.Fields{
 		"group_id": groupIDStr,
