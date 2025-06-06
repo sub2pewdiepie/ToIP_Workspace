@@ -149,7 +149,7 @@ func main() {
 		// Applications
 		protected.POST("/groups/applications", appHandler.CreateApplication)
 		protected.GET("/groups/applications/pending", appHandler.GetPendingApplications)
-		protected.PATCH("/groups/applications/review/:group_id", appHandler.ReviewApplication)
+		protected.PATCH("/groups/applications/review/:id", appHandler.ReviewApplication)
 	}
 
 	router.Run(":8080")
