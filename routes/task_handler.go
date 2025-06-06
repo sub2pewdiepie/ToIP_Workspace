@@ -701,7 +701,7 @@ func (h *TaskHandler) GetUserSubjects(c *gin.Context) {
 // @Failure 404 {object} map[string]string
 // @Router /api/groups/{group_id}/subjects/{subject_id}/tasks [get]
 func (h *TaskHandler) GetTasksBySubject(c *gin.Context) {
-	groupIDStr := c.Param("group_id")
+	groupIDStr := c.Param("id")
 	groupID, err := strconv.Atoi(groupIDStr)
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{
