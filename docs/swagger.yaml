@@ -1448,7 +1448,7 @@ paths:
       summary: Apply to a group
       tags:
       - group_applications
-  /api/groups/applications/{group_id}/review:
+  /api/groups/applications//review/{id}:
     patch:
       consumes:
       - application/json

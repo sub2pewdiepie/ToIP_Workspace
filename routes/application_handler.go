@@ -39,7 +39,7 @@ type ReviewStatusRequest struct {
 // @Failure 401 {object} map[string]string
 // @Failure 403 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /api/groups/applications/{id}/review [patch]
+// @Router /api/groups/applications//review/{id} [patch]
 func (h *GroupApplicationHandler) ReviewApplication(c *gin.Context) {
 	groupIDStr := c.Param("id")
 
