@@ -55,7 +55,7 @@ func (r *TaskRepository) OldFindByGroupID(groupID int32) ([]*models.Task, error)
 	return tasks, nil
 }
 
-func (r *TaskRepository) FindByGroupID(groupID int32) ([]*models.Task, error) {
+func (r *TaskRepository) OldNoPagFindByGroupID(groupID int32) ([]*models.Task, error) {
 	var tasks []*models.Task
 	if err := r.db.Preload("User").Preload("Subject").Where("group_id = ?", groupID).Find(&tasks).Error; err != nil {
 		utils.Logger.WithFields(logrus.Fields{
@@ -65,6 +65,32 @@ func (r *TaskRepository) FindByGroupID(groupID int32) ([]*models.Task, error) {
 		return nil, err
 	}
 	return tasks, nil
+}
+
+func (r *TaskRepository) FindByGroupID(groupID int32, page, pageSize int) ([]*models.Task, int64, error) {
+	var tasks []*models.Task
+	var total int64
+
+	query := r.db.Model(&models.Task{}).Where("group_id = ?", groupID).
+		Preload("User").Preload("Subject").Preload("Group").Preload("Group.AcademicGroup")
+
+	if err := query.Count(&total).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupID,
+		}).Error("Failed to count tasks")
+		return nil, 0, err
+	}
+
+	if err := query.Offset((page - 1) * pageSize).Limit(pageSize).Find(&tasks).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupID,
+		}).Error("Failed to find tasks by group ID")
+		return nil, 0, err
+	}
+
+	return tasks, total, nil
 }
 
 func (r *TaskRepository) UpdateVerificationStatus(taskID int32, isVerified bool) error {
@@ -81,7 +107,7 @@ func (r *TaskRepository) UpdateVerificationStatus(taskID int32, isVerified bool)
 
 func (r *TaskRepository) OldFindByGroupIDs(groupIDs []int32) ([]*models.Task, error) {
 	var tasks []*models.Task
-	if err := r.db.Preload("User").Where("group_id IN ?", groupIDs).Find(&tasks).Error; err != nil {
+	if err := r.db.Preload("User").Preload("Subject").Where("group_id IN ?", groupIDs).Find(&tasks).Error; err != nil {
 		utils.Logger.WithFields(logrus.Fields{
 			"error":     err,
 			"group_ids": groupIDs,
@@ -91,16 +117,30 @@ func (r *TaskRepository) OldFindByGroupIDs(groupIDs []int32) ([]*models.Task, er
 	return tasks, nil
 }
 
-func (r *TaskRepository) FindByGroupIDs(groupIDs []int32) ([]*models.Task, error) {
+func (r *TaskRepository) FindByGroupIDs(groupIDs []int32, page, pageSize int) ([]*models.Task, int64, error) {
 	var tasks []*models.Task
-	if err := r.db.Preload("User").Preload("Subject").Where("group_id IN ?", groupIDs).Find(&tasks).Error; err != nil {
+	var total int64
+
+	query := r.db.Model(&models.Task{}).Where("group_id IN ?", groupIDs).
+		Preload("User").Preload("Subject").Preload("Group").Preload("Group.AcademicGroup")
+
+	if err := query.Count(&total).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":     err,
+			"group_ids": groupIDs,
+		}).Error("Failed to count tasks")
+		return nil, 0, err
+	}
+
+	if err := query.Offset((page - 1) * pageSize).Limit(pageSize).Find(&tasks).Error; err != nil {
 		utils.Logger.WithFields(logrus.Fields{
 			"error":     err,
 			"group_ids": groupIDs,
 		}).Error("Failed to find tasks by group IDs")
-		return nil, err
+		return nil, 0, err
 	}
-	return tasks, nil
+
+	return tasks, total, nil
 }
 
 func (r *TaskRepository) Delete(taskID int32) error {
@@ -112,4 +152,32 @@ func (r *TaskRepository) Delete(taskID int32) error {
 		return err
 	}
 	return nil
+}
+
+func (r *TaskRepository) FindBySubjectID(subjectID, groupID int32, page, pageSize int) ([]*models.Task, int64, error) {
+	var tasks []*models.Task
+	var total int64
+
+	query := r.db.Model(&models.Task{}).Where("subject_id = ? AND group_id = ?", subjectID, groupID).
+		Preload("User").Preload("Subject").Preload("Group").Preload("Group.AcademicGroup")
+
+	if err := query.Count(&total).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":      err,
+			"subject_id": subjectID,
+			"group_id":   groupID,
+		}).Error("Failed to count tasks")
+		return nil, 0, err
+	}
+
+	if err := query.Offset((page - 1) * pageSize).Limit(pageSize).Find(&tasks).Error; err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":      err,
+			"subject_id": subjectID,
+			"group_id":   groupID,
+		}).Error("Failed to find tasks")
+		return nil, 0, err
+	}
+
+	return tasks, total, nil
 }

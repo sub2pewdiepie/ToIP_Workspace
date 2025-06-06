@@ -12,23 +12,26 @@ import (
 )
 
 type TaskHandler struct {
-	taskService  *services.TaskService
-	groupService *services.GroupService
+	taskService    *services.TaskService
+	groupService   *services.GroupService
+	subjectService *services.SubjectService
 }
 
-func NewTaskHandler(taskService *services.TaskService, groupService *services.GroupService) *TaskHandler {
-	return &TaskHandler{taskService, groupService}
+func NewTaskHandler(taskService *services.TaskService, groupService *services.GroupService, subjectService *services.SubjectService) *TaskHandler {
+	return &TaskHandler{taskService, groupService, subjectService}
 }
 
 // GetGroupTasks godoc
 // @Summary Get tasks in a group
-// @Description Get a list of tasks for the specified group
+// @Description Get a paginated list of tasks for the specified group
 // @Tags tasks
 // @Accept json
 // @Produce json
 // @Param group_id query int true "Group ID"
+// @Param page query int false "Page number" default(1) example(1)
+// @Param page_size query int false "Items per page" default(10) example(10)
 // @Param Authorization header string true "Bearer JWT"
-// @Success 200 {array} dto.TaskDTO
+// @Success 200 {object} dto.TasksResponse
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 403 {object} map[string]string
@@ -42,6 +45,17 @@ func (h *TaskHandler) GetGroupTasks(c *gin.Context) {
 			"group_id": groupIDStr,
 		}).Error("Invalid group ID")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid group ID"})
+		return
+	}
+
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page number"})
+		return
+	}
+	pageSize, err := strconv.Atoi(c.DefaultQuery("page_size", "10"))
+	if err != nil || pageSize < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page size"})
 		return
 	}
 
@@ -71,7 +85,7 @@ func (h *TaskHandler) GetGroupTasks(c *gin.Context) {
 		return
 	}
 
-	tasks, err := h.taskService.GetGroupTasks(int32(groupID))
+	tasks, total, err := h.taskService.GetGroupTasks(int32(groupID), page, pageSize)
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{
 			"error":    err,
@@ -81,12 +95,22 @@ func (h *TaskHandler) GetGroupTasks(c *gin.Context) {
 		return
 	}
 
+	response := dto.TasksResponse{
+		Tasks: tasks,
+		Pagination: dto.PaginationMeta{
+			Page:     page,
+			PageSize: pageSize,
+			Total:    total,
+			Pages:    (total + int64(pageSize) - 1) / int64(pageSize),
+		},
+	}
+
 	utils.Logger.WithFields(logrus.Fields{
 		"username": username,
 		"group_id": groupID,
 		"count":    len(tasks),
 	}).Info("Successfully fetched group tasks")
-	c.JSON(http.StatusOK, tasks)
+	c.JSON(http.StatusOK, response)
 }
 
 // CreateTask godoc
@@ -332,16 +356,30 @@ func (h *TaskHandler) GetTask(c *gin.Context) {
 
 // GetMyGroupTasks godoc
 // @Summary Get tasks from all user's groups
-// @Description Get a list of tasks from all groups the user is a member of
+// @Description Get a paginated list of tasks from all groups the user is a member of, including group, subject, and academic group details.
 // @Tags tasks
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number" default(1) example(1)
+// @Param page_size query int false "Items per page" default(10) example(10)
 // @Param Authorization header string true "Bearer JWT"
-// @Success 200 {array} dto.TaskDTO
+// @Success 200 {object} dto.TasksDetailResponse
+// @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /api/tasks/my-groups [get]
 func (h *TaskHandler) GetMyGroupTasks(c *gin.Context) {
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page number"})
+		return
+	}
+	pageSize, err := strconv.Atoi(c.DefaultQuery("page_size", "10"))
+	if err != nil || pageSize < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page size"})
+		return
+	}
+
 	username, exists := c.Get("username")
 	if !exists {
 		utils.Logger.Error("Unauthorized: username not found in context")
@@ -363,11 +401,14 @@ func (h *TaskHandler) GetMyGroupTasks(c *gin.Context) {
 		utils.Logger.WithFields(logrus.Fields{
 			"username": username,
 		}).Info("User is not a member of any groups")
-		c.JSON(http.StatusOK, []dto.TaskDTO{})
+		c.JSON(http.StatusOK, dto.TasksDetailResponse{
+			Tasks:      []dto.TaskDetailDTO{},
+			Pagination: dto.PaginationMeta{Page: page, PageSize: pageSize, Total: 0, Pages: 0},
+		})
 		return
 	}
 
-	tasks, err := h.taskService.GetTasksByGroupIDs(groupIDs)
+	tasks, total, err := h.taskService.GetTasksByGroupIDs(groupIDs, page, pageSize)
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{
 			"error":     err,
@@ -377,12 +418,22 @@ func (h *TaskHandler) GetMyGroupTasks(c *gin.Context) {
 		return
 	}
 
+	response := dto.TasksDetailResponse{
+		Tasks: tasks,
+		Pagination: dto.PaginationMeta{
+			Page:     page,
+			PageSize: pageSize,
+			Total:    total,
+			Pages:    (total + int64(pageSize) - 1) / int64(pageSize),
+		},
+	}
+
 	utils.Logger.WithFields(logrus.Fields{
 		"username":    username,
 		"count":       len(tasks),
 		"group_count": len(groupIDs),
 	}).Info("Successfully fetched tasks from user's groups")
-	c.JSON(http.StatusOK, tasks)
+	c.JSON(http.StatusOK, response)
 }
 
 // DeleteTask godoc
@@ -461,4 +512,281 @@ func (h *TaskHandler) DeleteTask(c *gin.Context) {
 		"task_id":  taskID,
 	}).Info("Task deleted successfully")
 	c.JSON(http.StatusOK, gin.H{"message": "Task deleted successfully"})
+}
+
+// GetSubjectsByGroup godoc
+// @Summary Get subjects by group ID
+// @Description Retrieves a paginated list of subjects for the group's academic group, accessible to group members.
+// @Tags subjects
+// @Accept json
+// @Produce json
+// @Param id path int true "Group ID" example(1)
+// @Param page query int false "Page number" default(1) example(1)
+// @Param page_size query int false "Items per page" default(10) example(10)
+// @Param Authorization header string true "Bearer JWT"
+// @Success 200 {object} dto.SubjectsResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/groups/{id}/subjects [get]
+func (h *TaskHandler) GetSubjectsByGroup(c *gin.Context) {
+	groupIDStr := c.Param("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupIDStr,
+		}).Error("Invalid group ID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid group ID"})
+		return
+	}
+
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page number"})
+		return
+	}
+	pageSize, err := strconv.Atoi(c.DefaultQuery("page_size", "10"))
+	if err != nil || pageSize < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page size"})
+		return
+	}
+
+	username, exists := c.Get("username")
+	if !exists {
+		utils.Logger.Error("Unauthorized: username not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	isMember, err := h.groupService.IsGroupMember(int32(groupID), username.(string))
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+			"group_id": groupID,
+		}).Error("Failed to check group membership")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check membership"})
+		return
+	}
+	if !isMember {
+		utils.Logger.WithFields(logrus.Fields{
+			"username": username,
+			"group_id": groupID,
+		}).Warn("Forbidden: user is not a group member")
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied: group membership required"})
+		return
+	}
+
+	group, err := h.groupService.GetGroupByID(int32(groupID))
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupID,
+		}).Error("Failed to fetch group")
+		c.JSON(http.StatusNotFound, gin.H{"error": "Group not found"})
+		return
+	}
+
+	subjects, total, err := h.subjectService.GetSubjectsByAcademicGroupID(group.AcademicGroupID, page, pageSize)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+			"group_id": groupID,
+		}).Error("Failed to fetch subjects")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch subjects"})
+		return
+	}
+
+	response := dto.SubjectsResponse{
+		Subjects: subjects,
+		Pagination: dto.PaginationMeta{
+			Page:     page,
+			PageSize: pageSize,
+			Total:    total,
+			Pages:    (total + int64(pageSize) - 1) / int64(pageSize),
+		},
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+		"group_id": groupID,
+		"total":    total,
+	}).Info("Subjects fetched successfully")
+	c.JSON(http.StatusOK, response)
+}
+
+// GetUserSubjects godoc
+// @Summary Get subjects from user's groups
+// @Description Retrieves a paginated list of subjects from the academic groups of the user's groups, including group and academic group details.
+// @Tags subjects
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number" default(1) example(1)
+// @Param page_size query int false "Items per page" default(10) example(10)
+// @Param Authorization header string true "Bearer JWT"
+// @Success 200 {object} dto.SubjectsDetailResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/subjects/my-groups [get]
+func (h *TaskHandler) GetUserSubjects(c *gin.Context) {
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page number"})
+		return
+	}
+	pageSize, err := strconv.Atoi(c.DefaultQuery("page_size", "10"))
+	if err != nil || pageSize < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page size"})
+		return
+	}
+
+	username, exists := c.Get("username")
+	if !exists {
+		utils.Logger.Error("Unauthorized: username not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	subjects, total, err := h.subjectService.GetUserSubjects(username.(string), page, pageSize)
+	if err != nil {
+		if err.Error() == "user not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+		}).Error("Failed to fetch user subjects")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch subjects"})
+		return
+	}
+
+	response := dto.SubjectsDetailResponse{
+		Subjects: subjects,
+		Pagination: dto.PaginationMeta{
+			Page:     page,
+			PageSize: pageSize,
+			Total:    total,
+			Pages:    (total + int64(pageSize) - 1) / int64(pageSize),
+		},
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username": username,
+		"total":    total,
+	}).Info("User subjects fetched successfully")
+	c.JSON(http.StatusOK, response)
+}
+
+// GetTasksBySubject godoc
+// @Summary Get tasks by subject and group
+// @Description Retrieves a paginated list of tasks for a subject within a group, accessible to group members.
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param group_id path int true "Group ID" example(1)
+// @Param subject_id path int true "Subject ID" example(1)
+// @Param page query int false "Page number" default(1) example(1)
+// @Param page_size query int false "Items per page" default(10) example(10)
+// @Param Authorization header string true "Bearer JWT"
+// @Success 200 {object} dto.TasksResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/groups/{group_id}/subjects/{subject_id}/tasks [get]
+func (h *TaskHandler) GetTasksBySubject(c *gin.Context) {
+	groupIDStr := c.Param("id")
+	groupID, err := strconv.Atoi(groupIDStr)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"group_id": groupIDStr,
+		}).Error("Invalid group ID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid group ID"})
+		return
+	}
+
+	subjectIDStr := c.Param("subject_id")
+	subjectID, err := strconv.Atoi(subjectIDStr)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":      err,
+			"subject_id": subjectIDStr,
+		}).Error("Invalid subject ID")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid subject ID"})
+		return
+	}
+
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page number"})
+		return
+	}
+	pageSize, err := strconv.Atoi(c.DefaultQuery("page_size", "10"))
+	if err != nil || pageSize < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page size"})
+		return
+	}
+
+	username, exists := c.Get("username")
+	if !exists {
+		utils.Logger.Error("Unauthorized: username not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	isMember, err := h.groupService.IsGroupMember(int32(groupID), username.(string))
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":    err,
+			"username": username,
+			"group_id": groupID,
+		}).Error("Failed to check group membership")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check membership"})
+		return
+	}
+	if !isMember {
+		utils.Logger.WithFields(logrus.Fields{
+			"username": username,
+			"group_id": groupID,
+		}).Warn("Forbidden: user is not a group member")
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied: group membership required"})
+		return
+	}
+
+	tasks, total, err := h.taskService.GetTasksBySubjectID(int32(subjectID), int32(groupID), page, pageSize)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"error":      err,
+			"username":   username,
+			"group_id":   groupID,
+			"subject_id": subjectID,
+		}).Error("Failed to fetch tasks")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch tasks"})
+		return
+	}
+
+	response := dto.TasksResponse{
+		Tasks: tasks,
+		Pagination: dto.PaginationMeta{
+			Page:     page,
+			PageSize: pageSize,
+			Total:    total,
+			Pages:    (total + int64(pageSize) - 1) / int64(pageSize),
+		},
+	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"username":   username,
+		"group_id":   groupID,
+		"subject_id": subjectID,
+		"total":      total,
+	}).Info("Tasks fetched successfully")
+	c.JSON(http.StatusOK, response)
 }
