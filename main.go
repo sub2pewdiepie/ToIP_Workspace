@@ -125,31 +125,47 @@ func main() {
 		}
 
 		// Subject endpoints
-		protected.GET("/subjects/:id", subjectHandler.GetSubject)
-		protected.POST("/subjects", subjectHandler.CreateSubject)
-		protected.PATCH("/subjects/:id", subjectHandler.UpdateSubject)
-		protected.DELETE("/subjects/:id", subjectHandler.DeleteSubject)
-		protected.GET("/subjects/my-groups", taskHandler.GetUserSubjects)
+		subjects := protected.Group("/subjects")
+		{
+			subjects.GET("/:id", subjectHandler.GetSubject)
+			subjects.POST("", subjectHandler.CreateSubject)
+			subjects.PATCH("/:id", subjectHandler.UpdateSubject)
+			subjects.DELETE("/:id", subjectHandler.DeleteSubject)
+			subjects.GET("/my-groups", taskHandler.GetUserSubjects)
+		}
 
 		// GroupUser endpoints
-		protected.GET("/group-users/:group_id/:user_id", groupUserHandler.GetGroupUser)
-		protected.POST("/group-users", groupUserHandler.CreateGroupUser)
-		protected.PATCH("/group-users/:group_id/:user_id", groupUserHandler.UpdateGroupUser)
-		protected.DELETE("/group-users/:group_id/:user_id", groupUserHandler.DeleteGroupUser)
+		groupuser := protected.Group("/group-users")
+		{
+			groupuser.GET("/:group_id/:user_id", groupUserHandler.GetGroupUser)
+			groupuser.POST("", groupUserHandler.CreateGroupUser)
+			groupuser.PATCH("/:group_id/:user_id", groupUserHandler.UpdateGroupUser)
+			groupuser.DELETE("/:group_id/:user_id", groupUserHandler.DeleteGroupUser)
+		}
 		// AcademicGroup endpoints
-		protected.GET("/academic-groups/:id", academicGroupHandler.GetAcademicGroup)
-		protected.POST("/academic-groups", academicGroupHandler.CreateAcademicGroup)
-		protected.PATCH("/academic-groups/:id", academicGroupHandler.UpdateAcademicGroup)
-		protected.DELETE("/academic-groups/:id", academicGroupHandler.DeleteAcademicGroup)
-		protected.GET("/academic-groups", academicGroupHandler.GetAllAcademicGroups)
+		academicgroups := protected.Group("/academic-groups")
+		{
+			academicgroups.GET("/:id", academicGroupHandler.GetAcademicGroup)
+			academicgroups.POST("", academicGroupHandler.CreateAcademicGroup)
+			academicgroups.PATCH("/:id", academicGroupHandler.UpdateAcademicGroup)
+			academicgroups.DELETE("/:id", academicGroupHandler.DeleteAcademicGroup)
+			academicgroups.GET("", academicGroupHandler.GetAllAcademicGroups)
+		}
+
 		// GroupModer endpoints
-		protected.GET("/group-moders/:group_id/:user_id", groupModerHandler.GetGroupModer)
-		protected.POST("/group-moders", groupModerHandler.CreateGroupModer)
-		protected.DELETE("/group-moders/:group_id/:user_id", groupModerHandler.DeleteGroupModer)
+		groumoders := protected.Group("/group-moders")
+		{
+			groumoders.GET("/:group_id/:user_id", groupModerHandler.GetGroupModer)
+			groumoders.POST("", groupModerHandler.CreateGroupModer)
+			groumoders.DELETE("/:group_id/:user_id", groupModerHandler.DeleteGroupModer)
+		}
 		// Applications
-		protected.POST("/groups/applications", appHandler.CreateApplication)
-		protected.GET("/groups/applications/pending", appHandler.GetPendingApplications)
-		protected.PATCH("/groups/applications/review/:id", appHandler.ReviewApplication)
+		applications := protected.Group("/groups/applications")
+		{
+			applications.POST("/groups/applications", appHandler.CreateApplication)
+			applications.GET("/groups/applications/pending", appHandler.GetPendingApplications)
+			applications.PATCH("/groups/applications/review/:id", appHandler.ReviewApplication)
+		}
 	}
 
 	router.Run(":8080")
