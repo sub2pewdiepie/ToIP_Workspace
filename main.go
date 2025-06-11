@@ -162,9 +162,9 @@ func main() {
 		// Applications
 		applications := protected.Group("/groups/applications")
 		{
-			applications.POST("/groups/applications", appHandler.CreateApplication)
-			applications.GET("/groups/applications/pending", appHandler.GetPendingApplications)
-			applications.PATCH("/groups/applications/review/:id", appHandler.ReviewApplication)
+			applications.POST("", appHandler.CreateApplication)
+			applications.GET("/pending", appHandler.GetPendingApplications)
+			applications.PATCH("/review/:id", appHandler.ReviewApplication)
 		}
 	}
 
