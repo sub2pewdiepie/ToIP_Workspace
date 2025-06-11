@@ -216,8 +216,6 @@ definitions:
     type: object
   dto.UpdateGroupRequest:
     properties:
-      academic_group_id:
-        type: integer
       name:
         type: string
     type: object
@@ -1177,8 +1175,7 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Updates a group's name or academic group ID, restricted to the
-        group admin.
+      description: Updates a group's name, restricted to the group admin.
       parameters:
       - description: Group ID
         example: 1

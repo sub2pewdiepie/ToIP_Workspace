@@ -219,7 +219,7 @@ func (h *GroupHandler) CreateGroup(c *gin.Context) {
 
 // UpdateGroup godoc
 // @Summary Update a group
-// @Description Updates a group's name or academic group ID, restricted to the group admin.
+// @Description Updates a group's name, restricted to the group admin.
 // @Tags groups
 // @Accept json
 // @Produce json
@@ -252,9 +252,7 @@ func (h *GroupHandler) UpdateGroup(c *gin.Context) {
 	if input.Name != "" {
 		group.Name = input.Name
 	}
-	if input.AcademicGroupID != 0 {
-		group.AcademicGroupID = input.AcademicGroupID
-	}
+
 	if err := h.service.UpdateGroup(c, group); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
