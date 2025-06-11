@@ -50,7 +50,7 @@ jobs:
               "port": ${{secrets.PORT}}
             }
             EOL
-            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" > .env
             echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
             echo "POSTGRES_DB=${{ secrets.DBNAME }}" >> .env
             echo "LOG_FORMAT=${{ secrets.LOG_FORMAT }}" >> .env
@@ -59,8 +59,6 @@ jobs:
             echo "DOMAIN=${{ secrets.DOMAIN }}" >> .env
             # Build and deploy
             docker compose build --no-cache
-            chmod +x ./gen_env.sh
-            ./gen_env.sh
             docker compose up -d
             # Подчищаем за собой
             docker image prune -f --filter "until=24h"

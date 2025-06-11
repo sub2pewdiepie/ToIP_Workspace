@@ -166,10 +166,10 @@ type OldGroupModer struct {
 }
 
 type GroupModer struct {
-	GroupID   int32 `gorm:"primaryKey;foreignKey:GroupID"`
-	UserID    int32 `gorm:"primaryKey;foreignKey:UserID"`
-	Group     Group `gorm:"foreignKey:GroupID"`
-	User      User  `gorm:"foreignKey:UserID"`
+	GroupID   int32 `gorm:"primaryKey;foreignKey:GroupID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	UserID    int32 `gorm:"primaryKey;foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Group     Group `gorm:"foreignKey:GroupID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	User      User  `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	CreatedAt time.Time
 }
 
@@ -188,8 +188,8 @@ type GroupUser struct {
 	UserID   int32     `gorm:"primaryKey;foreignKey:UserID;references:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Role     string    `gorm:"type:varchar(50);default:'member'"`
 	JoinedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	Group    Group     `gorm:"foreignKey:GroupID"`
-	User     User      `gorm:"foreignKey:UserID"`
+	Group    Group     `gorm:"foreignKey:GroupID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	User     User      `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // Subjects
@@ -228,8 +228,8 @@ type OldTask struct {
 }
 type Task struct {
 	ID          int32      `gorm:"primaryKey;autoIncrement" json:"id"`
-	GroupID     int32      `gorm:"not null" json:"group_id"`
-	UserID      int32      `gorm:"not null" json:"user_id"`
+	GroupID     int32      `gorm:"not null" json:"group_id;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	UserID      int32      `gorm:"not null" json:"user_id;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Title       string     `gorm:"not null" json:"title"`
 	Description string     `gorm:"type:text" json:"description"`
 	IsVerified  bool       `gorm:"default:false" json:"is_verified"`

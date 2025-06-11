@@ -40,6 +40,6 @@ type CreateGroupRequest struct {
 }
 
 type UpdateGroupRequest struct {
-	Name            string `json:"name,omitempty"`
-	AcademicGroupID int32  `json:"academic_group_id,omitempty"`
+	Name string `json:"name,omitempty"`
+	// AcademicGroupID int32  `json:"academic_group_id,omitempty"`
 }

@@ -1595,7 +1595,7 @@ const docTemplate = `{
                 }
             },
             "patch": {
-                "description": "Updates a group's name or academic group ID, restricted to the group admin.",
+                "description": "Updates a group's name, restricted to the group admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3182,9 +3182,6 @@ const docTemplate = `{
         "dto.UpdateGroupRequest": {
             "type": "object",
             "properties": {
-                "academic_group_id": {
-                    "type": "integer"
-                },
                 "name": {
                     "type": "string"
                 }
