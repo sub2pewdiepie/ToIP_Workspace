@@ -5,14 +5,14 @@
 - Саакови Давит
 ## По второй
 TO-DO:
-1. ER-диаграмма
-2. Swagger/OpenAPI документация - DONE?
+1. ER-диаграмма - DONE
+2. Swagger/OpenAPI документация - DONE
 ## По третьей
 TO-DO:
 1. Dockerfile - DONE
 2. docker-compose - DONE
 3. Миграция - DONE
-4. GitHub Actions (сборка/тестирование) - PENDING
+4. GitHub Actions (сборка/тестирование) - DONE
 ## По четвёртой
 TO-DO:
 1. NGINX - DONE
